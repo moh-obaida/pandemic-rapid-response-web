@@ -1,0 +1,57 @@
+/* ============================================================
+   TYPOGRAPHY — Pandemic Rapid Response
+   Families, weights, fluid display scale, tracking.
+   ============================================================ */
+:root {
+  /* families */
+  --font-display: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  --font-body:    'Public Sans', system-ui, -apple-system, sans-serif;
+  --font-mono:    'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* weights */
+  --w-regular: 400; /* @kind other */
+  --w-medium:  500; /* @kind other */
+  --w-semi:    600; /* @kind other */
+  --w-bold:    700; /* @kind other */
+  --w-black:   900; /* @kind other */
+
+  /* type scale (px-based, fixed game UI) */
+  --fs-display: 64px;   /* hero numerals / outbreak shouts */
+  --fs-h1: 40px;
+  --fs-h2: 30px;
+  --fs-h3: 22px;
+  --fs-title: 18px;
+  --fs-body: 16px;
+  --fs-sm: 14px;
+  --fs-xs: 12px;
+  --fs-micro: 11px;     /* labels, all-caps tags */
+
+  /* line heights */
+  --lh-tight: 1.02; /* @kind other */
+  --lh-snug: 1.18; /* @kind other */
+  --lh-normal: 1.45; /* @kind other */
+
+  /* letter spacing */
+  --ls-display: -0.02em;  /* tight on big Archivo */
+  --ls-tight: -0.01em;
+  --ls-normal: 0em;
+  --ls-label: 0.14em;     /* all-caps micro labels */
+  --ls-mono: 0.02em;
+}
+
+/* Utility classes consumers may apply directly */
+.t-display { font-family: var(--font-display); font-weight: var(--w-black);
+  font-size: var(--fs-display); line-height: var(--lh-tight); letter-spacing: var(--ls-display); }
+.t-h1 { font-family: var(--font-display); font-weight: var(--w-bold);
+  font-size: var(--fs-h1); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); }
+.t-h2 { font-family: var(--font-display); font-weight: var(--w-bold);
+  font-size: var(--fs-h2); line-height: var(--lh-snug); letter-spacing: var(--ls-tight); }
+.t-h3 { font-family: var(--font-display); font-weight: var(--w-semi);
+  font-size: var(--fs-h3); line-height: var(--lh-snug); }
+.t-body { font-family: var(--font-body); font-weight: var(--w-regular);
+  font-size: var(--fs-body); line-height: var(--lh-normal); color: var(--text-body); }
+.t-label { font-family: var(--font-display); font-weight: var(--w-bold);
+  font-size: var(--fs-micro); letter-spacing: var(--ls-label);
+  text-transform: uppercase; color: var(--text-muted); }
+.t-mono { font-family: var(--font-mono); font-weight: var(--w-regular);
+  letter-spacing: var(--ls-mono); font-variant-numeric: tabular-nums; }

@@ -1,0 +1,11 @@
+/* ============================================================
+   FONTS — Pandemic Rapid Response
+   Webfonts are loaded from Google Fonts.
+   - Archivo  : utilitarian display / headers (600–900, incl. expanded)
+   - Public Sans : civic body text (400–700) — US Web Design System face
+   - Space Mono : timers, counters, coordinates, data
+   NOTE: hosted by Google. To self-host, drop the .woff2 files in
+   assets/fonts/ and replace this @import with @font-face rules.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');

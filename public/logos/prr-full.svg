@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 54" fill="none">
+  <rect width="54" height="54" rx="12" fill="#F44336"/>
+  <path d="M27 16L33 24H30V36H24V24H21L27 16Z" fill="#fff" transform="rotate(45 27 27)"/>
+  <text x="68" y="18" font-family="Archivo, Arial Narrow, sans-serif" font-weight="700" font-size="13" letter-spacing="4.5" fill="#B4B4B4">PANDEMIC</text>
+  <text x="68" y="44" font-family="Archivo, Arial Narrow, sans-serif" font-weight="900" font-size="34" letter-spacing="-0.5" fill="#FFFFFF">RAPID <tspan fill="#F44336">RESPONSE</tspan></text>
+</svg>

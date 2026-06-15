@@ -1,0 +1,90 @@
+/* ============================================================
+   COLORS — Pandemic Rapid Response (digital interface)
+   Per product spec: dark, minimal, functional. Room-centric.
+   Each of the 8 rooms owns a color; supplies inherit room color.
+   ============================================================ */
+:root {
+  /* ---------- DARK UI NEUTRALS (the console) ---------- */
+  --bg-950: #161616;  /* deepest well / scrim */
+  --bg-900: #1A1A1A;
+  --bg-app: #212121;  /* APP CANVAS (spec) */
+  --bg-800: #262626;
+  --bg-panel: #2C2C2C; /* player areas, cards, status bar */
+  --bg-700: #303030;
+  --bg-raised: #383838; /* raised tiles, dice rest */
+  --bg-hover: #424242;  /* hover fill */
+
+  --line: #424242;        /* borders (spec) */
+  --line-soft: #363636;   /* subtle dividers */
+  --line-strong: #5A5A5A; /* emphasized edges */
+
+  --text: #FFFFFF;        /* primary text (spec) */
+  --text-dim: #B4B4B4;    /* secondary */
+  --text-faint: #7E7E7E;  /* tertiary / placeholder */
+  --text-disabled: #5C5C5C;
+  --text-on-color: #14181F; /* dark text on bright room colors */
+
+  /* ---------- 8 ROOM COLORS (spec) ---------- */
+  --room-vaccine:   #4DA6D6;  /* light blue */
+  --room-food:      #7CB342;  /* lime green */
+  --room-power:     #FFD54F;  /* gold */
+  --room-firstaid:  #EF5350;  /* red */
+  --room-water:     #29B6F6;  /* cyan */
+  --room-recycling: #558B2F;  /* dark green */
+  --room-cargo:     #FF9800;  /* orange */
+  --room-hq:        #9E9E9E;  /* gray (lightened from 757575 for dark-bg legibility) */
+  --room-hq-true:   #757575;  /* spec value */
+
+  /* ---------- SUPPLY TYPES (inherit room colors) ---------- */
+  --supply-vaccine:  var(--room-vaccine);
+  --supply-food:     var(--room-food);
+  --supply-power:    var(--room-power);
+  --supply-firstaid: var(--room-firstaid);
+  --supply-water:    var(--room-water);
+
+  /* ---------- GAME STATE ACCENTS (spec) ---------- */
+  --active:    #FFD54F;  /* active player / current turn highlight (gold) */
+  --highlight: #4CAF50;  /* valid target / selectable (bright green) */
+  --error:     #F44336;  /* invalid / lose / error */
+  --plane:     #AB47BC;  /* plane pawn (purple) */
+  --plane-soft:#4A2A52;
+
+  /* ---------- TIMER ZONES (spec) ---------- */
+  --timer-safe: #4CAF50;  /* 0–60s remaining */
+  --timer-warn: #FFC107;  /* 60–30s */
+  --timer-crit: #F44336;  /* 30–0s */
+
+  /* ---------- WASTE TRACK (gray → orange → red) ---------- */
+  --waste-low:  #616161;
+  --waste-mid:  #FF9800;
+  --waste-high: #F44336;
+  --waste-end:  #B71C1C;
+
+  /* ====================================================
+     SEMANTIC ALIASES — reference these in components
+     ==================================================== */
+  --surface-app:    var(--bg-app);
+  --surface-panel:  var(--bg-panel);
+  --surface-raised: var(--bg-raised);
+  --surface-well:   var(--bg-900);
+
+  --border-default: var(--line);
+  --border-subtle:  var(--line-soft);
+  --border-strong:  var(--line-strong);
+
+  --text-strong: var(--text);
+  --text-body:   var(--text-dim);
+  --text-muted:  var(--text-faint);
+
+  /* brand accent = the alert red of the logo / primary action */
+  --accent:      #F44336;
+  --accent-deep: #C62828;
+  --accent-soft: #4A2320;
+
+  --focus-ring: #4DA6D6;
+
+  /* status semantics */
+  --status-ok:    var(--highlight);
+  --status-warn:  var(--timer-warn);
+  --status-crit:  var(--error);
+}

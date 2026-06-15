@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: var(--bg-app);
+  --color-surface: var(--bg-panel);
+  --color-raised: var(--bg-raised);
+  --color-primary: var(--accent);
+  --color-success: var(--highlight);
+  --color-warning: var(--timer-warn);
+  --color-danger: var(--error);
+  --color-text: var(--text);
+  --color-muted: var(--text-dim);
+  --color-faint: var(--text-faint);
+
+  --color-room-hq: var(--room-hq);
+  --color-room-vaccine: var(--room-vaccine);
+  --color-room-food: var(--room-food);
+  --color-room-power: var(--room-power);
+  --color-room-water: var(--room-water);
+  --color-room-firstaid: var(--room-firstaid);
+  --color-room-recycling: var(--room-recycling);
+  --color-room-cargo: var(--room-cargo);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}

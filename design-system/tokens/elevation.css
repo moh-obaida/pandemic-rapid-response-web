@@ -1,0 +1,48 @@
+/* ============================================================
+   ELEVATION — Pandemic Rapid Response (dark UI)
+   Radii, borders, shadows, focus, motion.
+   Panels read flat with subtle lift; game pieces (dice, crates,
+   pawns) read tactile with a hard offset + glow on lift.
+   ============================================================ */
+:root {
+  /* radii */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+  --radius-die: 12px;   /* dice — rounded square */
+  --radius-crate: 6px;  /* supply crates */
+
+  /* borders */
+  --border-hair: 1px;
+  --border-thick: 2px;
+  --border-game: 3px;   /* chunky outlines on highlighted pieces */
+
+  /* shadows — panels on dark */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-panel: 0 2px 8px rgba(0,0,0,0.45);
+  --shadow-pop: 0 12px 34px -8px rgba(0,0,0,0.7);
+  --shadow-modal: 0 24px 70px -12px rgba(0,0,0,0.8);
+
+  /* shadows — tactile pieces (hard table shadow) */
+  --shadow-piece: 0 2px 0 rgba(0,0,0,0.5), 0 5px 12px -2px rgba(0,0,0,0.6);
+  --shadow-piece-lift: 0 7px 0 rgba(0,0,0,0.45), 0 16px 26px -6px rgba(0,0,0,0.7);
+
+  /* glows — selection / active / valid target */
+  --glow-active:    0 0 0 2px var(--active), 0 0 14px -2px rgba(255,213,79,0.7);
+  --glow-valid:     0 0 0 2px var(--highlight), 0 0 14px -2px rgba(76,175,80,0.6);
+  --glow-error:     0 0 0 2px var(--error), 0 0 14px -2px rgba(244,67,54,0.6);
+
+  /* focus ring */
+  --ring: 0 0 0 3px rgba(77,166,214,0.55);
+  --ring-danger: 0 0 0 3px rgba(244,67,54,0.5);
+
+  /* motion */
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.25, 1); /* @kind other */   /* quick, decisive */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --dur-fast: 110ms; /* @kind other */
+  --dur-med: 200ms; /* @kind other */
+  --dur-slow: 320ms; /* @kind other */
+}
