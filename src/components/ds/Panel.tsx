@@ -19,23 +19,24 @@ export function Panel({
 }: PanelProps) {
   const stripeStyle = accent
     ? stripe === 'top'
-      ? { borderTop: `3px solid ${accent}` }
-      : { borderLeft: `3px solid ${accent}` }
+      ? { borderTop: `4px solid ${accent}` }
+      : { borderLeft: `4px solid ${accent}` }
     : {}
 
   return (
     <div
       style={{
         background: 'var(--bg-panel)',
-        border: '1px solid var(--line)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-panel)',
+        border: '2px solid var(--line)',
+        borderRadius: '12px',
+        boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
         overflow: 'hidden',
+        transition: 'all 200ms ease',
         ...stripeStyle,
         ...style,
       }}
     >
-      {label && <div className="ds-label" style={{ padding: '10px 14px 0' }}>{label}</div>}
+      {label && <div className="ds-label" style={{ padding: '12px 16px 0', letterSpacing: '0.12em' }}>{label}</div>}
       <div style={{ padding }}>{children}</div>
     </div>
   )

@@ -23,19 +23,22 @@ export function SiteLayout({ children }: SiteLayoutProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px var(--gutter)',
-          borderBottom: '1px solid var(--line)',
+          padding: '12px var(--gutter)',
+          borderBottom: '2px solid var(--line)',
           position: 'sticky',
           top: 0,
           background: 'var(--bg-app)',
           zIndex: 40,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(26, 31, 42, 0.95)',
         }}
       >
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-          <img src="/logos/prr-icon.svg" alt="" width={36} height={36} />
-          <img src="/logos/prr-wordmark.svg" alt="Pandemic Rapid Response" height={24} />
+          <img src="/logos/prr-icon.svg" alt="" width={38} height={38} />
+          <img src="/logos/prr-wordmark.svg" alt="Pandemic Rapid Response" height={26} />
         </Link>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           {NAV.map((item) => (
             <Link
               key={item.to}
@@ -43,9 +46,12 @@ export function SiteLayout({ children }: SiteLayoutProps) {
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: 14,
-                fontWeight: pathname === item.to ? 600 : 400,
-                color: pathname === item.to ? 'var(--text)' : 'var(--text-dim)',
+                fontWeight: pathname === item.to ? 700 : 400,
+                color: pathname === item.to ? 'var(--accent)' : 'var(--text-dim)',
                 textDecoration: 'none',
+                transition: 'color 200ms ease',
+                borderBottom: pathname === item.to ? '2px solid var(--accent)' : 'none',
+                paddingBottom: pathname === item.to ? '4px' : '6px',
               }}
             >
               {item.label}
@@ -54,14 +60,17 @@ export function SiteLayout({ children }: SiteLayoutProps) {
           <Link
             to="/play"
             style={{
-              fontFamily: 'var(--font-body)',
+              fontFamily: 'var(--font-display)',
               fontWeight: 700,
               fontSize: 14,
-              padding: '8px 18px',
-              borderRadius: 'var(--radius-md)',
+              padding: '10px 22px',
+              borderRadius: '8px',
               background: 'var(--accent)',
               color: '#fff',
               textDecoration: 'none',
+              transition: 'all 200ms ease',
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)',
+              letterSpacing: '0.02em',
             }}
           >
             Play Now

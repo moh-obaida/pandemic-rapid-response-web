@@ -33,14 +33,14 @@ export function Button({
   onMouseLeave,
   ...rest
 }: ButtonProps) {
-  const variants: Record<Variant, { bg: string; fg: string; bd: string }> = {
-    primary: { bg: 'var(--accent)', fg: '#fff', bd: 'transparent' },
-    secondary: { bg: 'var(--bg-raised)', fg: 'var(--text)', bd: 'var(--line-strong)' },
-    ghost: { bg: 'transparent', fg: 'var(--text-dim)', bd: 'transparent' },
-    success: { bg: 'var(--highlight)', fg: '#0f2a12', bd: 'transparent' },
+  const variants: Record<Variant, { bg: string; fg: string; bd: string; hover: string }> = {
+    primary: { bg: 'var(--accent)', fg: '#fff', bd: 'transparent', hover: 'var(--accent-deep)' },
+    secondary: { bg: 'var(--bg-raised)', fg: 'var(--text)', bd: 'var(--line-strong)', hover: 'var(--line-strong)' },
+    ghost: { bg: 'transparent', fg: 'var(--text-dim)', bd: 'transparent', hover: 'var(--bg-hover)' },
+    success: { bg: 'var(--highlight)', fg: '#fff', bd: 'transparent', hover: 'var(--highlight)' },
   }
   let v = variants[variant]
-  if (roomColor) v = { bg: roomColor, fg: 'var(--text-on-color)', bd: 'transparent' }
+  if (roomColor) v = { bg: roomColor, fg: 'var(--text-on-color)', bd: 'transparent', hover: roomColor }
 
   return (
     <button
@@ -51,26 +51,27 @@ export function Button({
         justifyContent: 'center',
         gap: 8,
         height: HEIGHTS[size],
-        padding: size === 'sm' ? '0 14px' : size === 'lg' ? '0 24px' : '0 18px',
+        padding: size === 'sm' ? '0 14px' : size === 'lg' ? '0 28px' : '0 20px',
         width: full ? '100%' : 'auto',
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-display)',
         fontWeight: 700,
-        fontSize: size === 'sm' ? 13 : size === 'lg' ? 17 : 15,
+        fontSize: size === 'sm' ? 13 : size === 'lg' ? 16 : 15,
         lineHeight: 1,
-        letterSpacing: '0.01em',
+        letterSpacing: '0.02em',
         color: v.fg,
         background: v.bg,
-        border: `1.5px solid ${v.bd}`,
-        borderRadius: 'var(--radius-md)',
+        border: `2px solid ${v.bd}`,
+        borderRadius: '8px',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.4 : 1,
-        transition: 'transform var(--dur-fast) var(--ease-snap), filter var(--dur-fast)',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
         userSelect: 'none',
         whiteSpace: 'nowrap',
+        boxShadow: variant === 'primary' ? '0 4px 12px rgba(220, 38, 38, 0.2)' : 'none',
         ...style,
       }}
       onMouseDown={(e) => {
-        if (!disabled) e.currentTarget.style.transform = 'scale(0.97)'
+        if (!disabled) e.currentTarget.style.transform = 'scale(0.98)'
         onMouseDown?.(e)
       }}
       onMouseUp={(e) => {

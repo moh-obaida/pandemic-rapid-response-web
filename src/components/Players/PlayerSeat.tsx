@@ -30,12 +30,15 @@ export function PlayerSeat({
 }: PlayerSeatProps) {
   return (
     <div
-      className={`absolute ${CORNER_CLASSES[corner]} w-[220px] rounded-xl bg-surface border p-3 ${
-        isSelf ? 'border-primary/60 shadow-lg shadow-primary/10' : 'border-white/10'
+      className={`absolute ${CORNER_CLASSES[corner]} w-[240px] rounded-xl bg-surface border p-4 ${
+        isSelf
+          ? 'border-primary/80 shadow-lg shadow-primary/15'
+          : 'border-white/15'
       }`}
+      style={isSelf ? { boxShadow: '0 8px 24px rgba(220, 38, 38, 0.2)' } : {}}
       aria-label={`Player ${player.name}${isSelf ? ' (you)' : ''}`}
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <span className="font-display font-bold text-sm text-text truncate">
           {player.name}
           {player.isHost && (
@@ -55,18 +58,18 @@ export function PlayerSeat({
       )}
 
       {!isSelf && player.dice.length > 0 && (
-        <div className="flex gap-1 justify-center">
+        <div className="flex gap-2 justify-center py-2">
           {player.dice.map((d) => (
             <div
               key={d.id}
-              className="w-6 h-6 rounded bg-white/10"
+              className="w-6 h-6 rounded-md bg-white/10 border border-white/20"
               aria-hidden
             />
           ))}
         </div>
       )}
 
-      <div className="mt-2">
+      <div className="mt-3 pt-3 border-t border-white/10">
         <PlayerStatus player={player} isCurrentTurn={isSelf} />
       </div>
     </div>

@@ -39,18 +39,21 @@ export function ActionPanel() {
   if (!currentPlayer) return null
 
   return (
-    <Panel label="Actions" padding={12} style={{ minWidth: 280 }}>
+    <Panel label="Command Center" padding={12} style={{ minWidth: 300 }} accent="var(--accent)">
       {phase === 'assigning' && (
         <>
           <p
             style={{
-              fontFamily: 'var(--font-body)',
+              fontFamily: 'var(--font-display)',
               fontSize: 13,
-              color: 'var(--text-dim)',
+              color: 'var(--accent)',
               marginBottom: 12,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
             }}
           >
-            YOUR TURN — Assign dice to rooms, then Submit
+            Your Turn — Coordinate Resources
           </p>
           <RoomSelector
             selectedDieId={selectedDieId}
