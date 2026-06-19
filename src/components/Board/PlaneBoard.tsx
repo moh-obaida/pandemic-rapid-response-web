@@ -25,11 +25,12 @@ export function PlaneBoard({ onRoomClick, selectedRoom }: PlaneBoardProps) {
 
   return (
     <div
-      className="grid grid-cols-3 grid-rows-3 gap-2 p-3"
+      className="grid grid-cols-3 grid-rows-3 gap-3 p-4"
       style={{
-        borderRadius: 'var(--radius-lg)',
+        borderRadius: '16px',
         background: 'var(--bg-800)',
-        border: '1px solid var(--line)',
+        border: '2px solid var(--line)',
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
       }}
       aria-label="Plane board with 8 rooms"
     >

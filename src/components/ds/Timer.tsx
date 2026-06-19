@@ -26,12 +26,19 @@ export function Timer({
         display: 'inline-flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 8,
+        gap: 10,
+        padding: '16px 20px',
+        background: 'var(--bg-panel)',
+        borderRadius: '12px',
+        border: `2px solid ${zone}`,
+        transition: 'border-color 200ms ease',
       }}
       aria-live="polite"
       aria-label={`${label}: ${mm}:${ss}`}
     >
-      <span className="ds-label">{label}</span>
+      <span className="ds-label" style={{ letterSpacing: '0.12em' }}>
+        {label}
+      </span>
       <div
         className={pulsing ? 'animate-timer-flash' : ''}
         style={{
@@ -41,32 +48,35 @@ export function Timer({
           lineHeight: 1,
           color: zone,
           fontVariantNumeric: 'tabular-nums',
-          letterSpacing: '0.01em',
+          letterSpacing: '-0.02em',
+          textShadow: `0 0 12px ${zone}40`,
         }}
       >
         {mm}:{ss}
       </div>
       <div
         style={{
-          width: FS * 3,
-          height: 6,
+          width: FS * 3.2,
+          height: 8,
           borderRadius: 999,
           background: 'var(--bg-raised)',
           overflow: 'hidden',
+          border: `1px solid ${zone}40`,
         }}
       >
         <div
           style={{
             width: `${pct * 100}%`,
             height: '100%',
-            background: zone,
-            transition: 'width 1s linear, background var(--dur-slow)',
+            background: `linear-gradient(90deg, ${zone}, ${zone}cc)`,
+            transition: 'width 1s linear, background 200ms ease',
+            boxShadow: `0 0 8px ${zone}60`,
           }}
         />
       </div>
       {seconds <= 5 && seconds > 0 && (
-        <span className="ds-label" style={{ color: 'var(--error)' }}>
-          Timer Low
+        <span className="ds-label" style={{ color: 'var(--error)', letterSpacing: '0.12em' }}>
+          Critical
         </span>
       )}
     </div>

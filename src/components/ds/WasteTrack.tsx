@@ -16,11 +16,23 @@ export function WasteTrack({ value = 0, max = 12 }: WasteTrackProps) {
 
   return (
     <div
-      style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 200 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        minWidth: 220,
+        padding: '16px 20px',
+        background: 'var(--bg-panel)',
+        borderRadius: '12px',
+        border: `2px solid ${value >= max * 0.85 ? 'var(--error)' : 'var(--line)'}`,
+        transition: 'border-color 200ms ease',
+      }}
       aria-label={`Waste level ${value} of ${max}`}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span className="ds-label">Waste</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between' }}>
+        <span className="ds-label" style={{ letterSpacing: '0.12em' }}>
+          Operational Waste
+        </span>
         <span
           style={{
             fontFamily: 'var(--font-mono)',
@@ -29,21 +41,22 @@ export function WasteTrack({ value = 0, max = 12 }: WasteTrackProps) {
             color: value >= max * 0.85 ? 'var(--error)' : 'var(--text-dim)',
           }}
         >
-          {value} / {max}
+          {value}/{max}
         </span>
       </div>
-      <div style={{ display: 'flex', gap: 4 }}>
+      <div style={{ display: 'flex', gap: 3 }}>
         {cells.map((i) => (
           <div
             key={i}
             className={i === value ? 'animate-waste-slide' : ''}
             style={{
               flex: 1,
-              height: 14,
-              borderRadius: 3,
+              height: 16,
+              borderRadius: 4,
               background: colorFor(i),
-              transition: 'background var(--dur-med)',
-              boxShadow: i === value ? '0 0 8px -1px var(--error)' : 'none',
+              transition: 'background 200ms ease',
+              border: `1px solid ${colorFor(i) === 'var(--bg-raised)' ? 'var(--line-soft)' : 'transparent'}`,
+              boxShadow: i === value ? `0 0 12px ${value >= max * 0.85 ? 'var(--error)' : 'var(--accent)'}60` : 'none',
             }}
           />
         ))}
@@ -55,10 +68,11 @@ export function WasteTrack({ value = 0, max = 12 }: WasteTrackProps) {
           fontFamily: 'var(--font-mono)',
           fontSize: 10,
           color: 'var(--text-faint)',
+          letterSpacing: '0.05em',
         }}
       >
-        <span>0</span>
-        <span>END</span>
+        <span>Safe</span>
+        <span>Critical</span>
       </div>
     </div>
   )

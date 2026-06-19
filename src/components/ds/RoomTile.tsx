@@ -60,22 +60,35 @@ export function RoomTile({
       style={{
         background: 'var(--bg-panel)',
         border: ring,
-        borderRadius: 'var(--radius-md)',
+        borderRadius: '12px',
         boxShadow: shadow,
-        padding: '10px 12px',
-        minHeight: 92,
+        padding: '12px 14px',
+        minHeight: 96,
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
         cursor: onClick ? 'pointer' : 'default',
-        borderTop: `3px solid ${r.color}`,
-        transition: 'box-shadow var(--dur-med)',
+        borderLeft: `4px solid ${r.color}`,
+        transition: 'all 200ms ease',
         textAlign: 'left',
         width: '100%',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-        <r.Icon size={18} color={r.color} strokeWidth={2} />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '100px',
+          height: '100px',
+          background: `radial-gradient(circle, ${r.color}08, transparent)`,
+          pointerEvents: 'none',
+        }}
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
+        <r.Icon size={20} color={r.color} strokeWidth={1.5} />
         <span className="ds-label" style={{ color: 'var(--text-dim)' }}>
           {r.label}
         </span>
@@ -87,6 +100,8 @@ export function RoomTile({
           flexWrap: 'wrap',
           flex: 1,
           alignItems: 'center',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {children}

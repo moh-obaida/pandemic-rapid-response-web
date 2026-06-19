@@ -1,6 +1,6 @@
 /* ============================================================
-   TYPOGRAPHY — Pandemic Rapid Response
-   Families, weights, fluid display scale, tracking.
+   TYPOGRAPHY — Pandemic Rapid Response (Medical Premium)
+   Families, weights, elegant scale, professional tracking.
    ============================================================ */
 :root {
   /* families */
@@ -15,27 +15,27 @@
   --w-bold:    700; /* @kind other */
   --w-black:   900; /* @kind other */
 
-  /* type scale (px-based, fixed game UI) */
-  --fs-display: 64px;   /* hero numerals / outbreak shouts */
-  --fs-h1: 40px;
-  --fs-h2: 30px;
-  --fs-h3: 22px;
-  --fs-title: 18px;
-  --fs-body: 16px;
-  --fs-sm: 14px;
-  --fs-xs: 12px;
+  /* type scale (px-based, premium medical) */
+  --fs-display: 72px;   /* hero headlines — commanding presence */
+  --fs-h1: 44px;        /* primary section headlines */
+  --fs-h2: 32px;        /* secondary headlines */
+  --fs-h3: 24px;        /* tertiary — card titles */
+  --fs-title: 18px;     /* prominent labels */
+  --fs-body: 16px;      /* body text */
+  --fs-sm: 14px;        /* secondary text */
+  --fs-xs: 12px;        /* captions */
   --fs-micro: 11px;     /* labels, all-caps tags */
 
   /* line heights */
-  --lh-tight: 1.02; /* @kind other */
-  --lh-snug: 1.18; /* @kind other */
-  --lh-normal: 1.45; /* @kind other */
+  --lh-tight: 1.0; /* @kind other */
+  --lh-snug: 1.15; /* @kind other */
+  --lh-normal: 1.5; /* @kind other */
 
   /* letter spacing */
-  --ls-display: -0.02em;  /* tight on big Archivo */
-  --ls-tight: -0.01em;
+  --ls-display: -0.01em;  /* elegant on large headlines */
+  --ls-tight: -0.005em;
   --ls-normal: 0em;
-  --ls-label: 0.14em;     /* all-caps micro labels */
+  --ls-label: 0.12em;     /* refined all-caps labels */
   --ls-mono: 0.02em;
 }
 
