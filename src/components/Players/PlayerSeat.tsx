@@ -1,28 +1,18 @@
 import type { Player } from '../../types/game'
-import type { Corner } from '../../types/ui'
 import { RoleCard } from './RoleCard'
 import { DicePool } from './DicePool'
 import { PlayerStatus } from './PlayerStatus'
 
 interface PlayerSeatProps {
   player: Player
-  corner: Corner
   isSelf?: boolean
   selectedDieId?: string | null
   onDieClick?: (dieId: string) => void
   rolling?: boolean
 }
 
-const CORNER_CLASSES: Record<Corner, string> = {
-  'top-left': 'top-2 left-2',
-  'top-right': 'top-2 right-2',
-  'bottom-left': 'bottom-24 left-2',
-  'bottom-right': 'bottom-24 right-2',
-}
-
 export function PlayerSeat({
   player,
-  corner,
   isSelf,
   selectedDieId,
   onDieClick,
@@ -30,20 +20,13 @@ export function PlayerSeat({
 }: PlayerSeatProps) {
   return (
     <div
-      className={`absolute ${CORNER_CLASSES[corner]} w-[240px] rounded-xl bg-surface border p-4 ${
-        isSelf
-          ? 'border-primary/80 shadow-lg shadow-primary/15'
-          : 'border-white/15'
-      }`}
-      style={isSelf ? { boxShadow: '0 8px 24px rgba(220, 38, 38, 0.2)' } : {}}
+      className={`player-seat${isSelf ? ' player-seat--self' : ''}`}
       aria-label={`Player ${player.name}${isSelf ? ' (you)' : ''}`}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-display font-bold text-sm text-text truncate">
+      <div className="player-seat__header">
+        <span className="player-seat__name">
           {player.name}
-          {player.isHost && (
-            <span className="ml-1 text-[10px] text-muted">(Host)</span>
-          )}
+          {player.isHost && <span className="player-seat__host">(Host)</span>}
         </span>
         <RoleCard roleId={player.role} compact />
       </div>
@@ -58,13 +41,9 @@ export function PlayerSeat({
       )}
 
       {!isSelf && player.dice.length > 0 && (
-        <div className="flex gap-2 justify-center py-2">
+        <div className="player-seat__dice-placeholder" aria-hidden>
           {player.dice.map((d) => (
-            <div
-              key={d.id}
-              className="w-6 h-6 rounded-md bg-white/10 border border-white/20"
-              aria-hidden
-            />
+            <div key={d.id} className="player-seat__dice-dot" />
           ))}
         </div>
       )}

@@ -4,7 +4,11 @@ import { useGameStore } from '../../store/gameStore'
 export function CrisisDisplay() {
   const crisis = useGameStore((s) => s.board.currentCrisis)
 
-  if (!crisis) return null
+  if (!crisis) {
+    return (
+      <span className="text-xs text-muted font-body">Clear</span>
+    )
+  }
 
   return (
     <button

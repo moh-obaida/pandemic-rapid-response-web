@@ -8,35 +8,16 @@ export function TimeTokens() {
 
   return (
     <Tooltip content="Spend 1 token per delivery flight. Tokens are shared in HQ">
-      <div
-        style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
-        aria-label={`${tokens} time tokens remaining`}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 11,
-            color: 'var(--text-faint)',
-          }}
-        >
+      <div className="time-tokens" aria-label={`${tokens} time tokens remaining`}>
+        <div className="time-tokens__header">
           <Clock size={12} />
           <span className="ds-label">Time Tokens</span>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div className="time-tokens__row">
           {Array.from({ length: max }).map((_, i) => (
             <div
               key={i}
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: '999px',
-                border: '2px solid var(--room-vaccine)',
-                background: i < tokens ? 'var(--room-vaccine)' : 'transparent',
-                opacity: i < tokens ? 1 : 0.3,
-                transition: 'opacity var(--dur-med)',
-              }}
+              className={`time-tokens__chip ${i < tokens ? 'time-tokens__chip--filled' : 'time-tokens__chip--empty'}`}
               aria-hidden
             />
           ))}

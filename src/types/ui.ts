@@ -19,5 +19,3 @@ export interface ModalState {
   crisis: boolean
   gameEnd: boolean
 }
-
-export type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'

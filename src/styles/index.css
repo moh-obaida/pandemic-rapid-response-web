@@ -1,5 +1,6 @@
 @import "./ds.css";
 @import "./tailwind.css";
+@import "./game-shell.css";
 
 *,
 *::before,
@@ -40,22 +41,7 @@ body,
   overflow: hidden;
 }
 
-@media (orientation: portrait) {
-  .game-viewport::before {
-    content: "Please rotate your device to landscape";
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-app);
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    text-align: center;
-    padding: 2rem;
-  }
-}
+/* Portrait hint handled in game-shell.css — soft banner, not fullscreen block */
 
 @keyframes dice-roll {
   0% { transform: rotate(0deg) scale(1); }

@@ -12,9 +12,7 @@ export function RoomSelector({
   selectedRoom,
   onRoomSelect,
 }: RoomSelectorProps) {
-  const assignableRooms = ROOMS.filter(
-    (r) => r.id !== 'hq' || true
-  )
+  const assignableRooms = ROOMS
 
   return (
     <div className="flex flex-col gap-1" aria-label="Room selector">

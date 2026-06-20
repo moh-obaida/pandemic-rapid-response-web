@@ -5,29 +5,21 @@ import { useGame } from '../hooks/useGame'
 import { useMultiplayer, useHostActions } from '../hooks/useMultiplayer'
 import { useTimer } from '../hooks/useTimer'
 import { PlaneBoard } from '../components/Board/PlaneBoard'
-import { Flightpath } from '../components/Board/Flightpath'
-import { WasteTrack } from '../components/Board/WasteTrack'
-import { TimeTokens } from '../components/Board/TimeTokens'
-import { TurnTimer } from '../components/Board/TurnTimer'
-import { CrisisDisplay } from '../components/Board/CrisisDisplay'
-import { PlayerSeat } from '../components/Players/PlayerSeat'
 import { ActionPanel } from '../components/Actions/ActionPanel'
 import { RoomActivation } from '../components/Modals/RoomActivation'
 import { CrisisModal } from '../components/Modals/CrisisModal'
 import { GameEnd } from '../components/Modals/GameEnd'
+import { GameShell } from '../components/layout/game/GameShell'
+import { MissionHeader } from '../components/layout/game/MissionHeader'
+import { PlayerRail } from '../components/layout/game/PlayerRail'
+import { BoardStage } from '../components/layout/game/BoardStage'
+import { MissionStatusPanel } from '../components/layout/game/MissionStatusPanel'
+import { FlightPathDock } from '../components/layout/game/FlightPathDock'
 import { startGame, startGameLocal } from '../lib/firebase'
 import { track } from '../lib/analytics'
-import type { Corner } from '../types/ui'
 import type { RoomId } from '../types/board'
 import { Play, Copy } from 'lucide-react'
 import { DIFFICULTY_CONFIG } from '../lib/constants'
-
-const CORNERS: Corner[] = [
-  'top-left',
-  'top-right',
-  'bottom-left',
-  'bottom-right',
-]
 
 export function GamePage() {
   const navigate = useNavigate()
@@ -149,50 +141,35 @@ export function GamePage() {
   }
 
   return (
-    <div className="game-viewport relative bg-canvas overflow-hidden select-none">
-      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-2 z-10">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display font-bold text-sm text-text">
-            PRR Online
-          </h1>
-          <span className="font-mono text-xs text-primary tracking-wider">
-            {roomCode}
-          </span>
-        </div>
-        <div className="text-xs text-muted font-body">
-          Round {round} · {DIFFICULTY_CONFIG[settings.difficulty].label}
-        </div>
-      </header>
-
-      {players.slice(0, 4).map((player, i) => (
-        <PlayerSeat
-          key={player.id}
-          player={player}
-          corner={CORNERS[i]}
-          isSelf={player.id === playerId}
-          selectedDieId={selectedDieId}
-          onDieClick={handleDieClick}
-        />
-      ))}
-
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-3">
-        <PlaneBoard
-          onRoomClick={handleRoomClick}
-          selectedRoom={selectedRoom}
-        />
-        <ActionPanel />
-      </div>
-
-      <div className="absolute bottom-14 left-4 right-4">
-        <Flightpath onDeliver={deliver} />
-      </div>
-
-      <footer className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-6 py-3 bg-surface/90 border-t border-white/10">
-        <WasteTrack />
-        <TurnTimer />
-        <TimeTokens />
-        <CrisisDisplay />
-      </footer>
+    <>
+      <GameShell
+        header={
+          <MissionHeader
+            roomCode={roomCode}
+            round={round}
+            difficulty={settings.difficulty}
+          />
+        }
+        rail={
+          <PlayerRail
+            players={players}
+            playerId={playerId}
+            selectedDieId={selectedDieId}
+            onDieClick={handleDieClick}
+          />
+        }
+        board={
+          <BoardStage>
+            <PlaneBoard
+              onRoomClick={handleRoomClick}
+              selectedRoom={selectedRoom}
+            />
+            <ActionPanel />
+          </BoardStage>
+        }
+        status={<MissionStatusPanel />}
+        flight={<FlightPathDock onDeliver={deliver} />}
+      />
 
       {activationRoom && (
         <RoomActivation
@@ -206,6 +183,6 @@ export function GamePage() {
       )}
       {modals.crisis && <CrisisModal />}
       {modals.gameEnd && <GameEnd />}
-    </div>
+    </>
   )
 }

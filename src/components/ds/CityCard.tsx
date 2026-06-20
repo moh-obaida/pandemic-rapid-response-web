@@ -1,6 +1,7 @@
 import { Check, Syringe, Apple, Zap, Droplets, HeartPulse } from 'lucide-react'
 import type { SupplyType } from '../../types/board'
 import { SUPPLY_LABELS } from '../../lib/constants'
+import { abbreviateCity } from '../../lib/cityLabel'
 
 const REGION_COLORS: Record<string, string> = {
   blue: 'var(--room-vaccine)',
@@ -40,43 +41,35 @@ export function CityCard({
   const supplyColor = `var(--room-${supplyNeeded === 'firstAid' ? 'firstaid' : supplyNeeded})`
 
   if (compact) {
+    const markerClass = [
+      'city-card-compact__marker',
+      current ? 'city-card-compact__marker--current' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+
     return (
       <button
         type="button"
         onClick={onClick}
         disabled={delivered}
+        title={city}
         aria-label={`${city}, needs ${SUPPLY_LABELS[supplyNeeded]}${delivered ? ', delivered' : ''}`}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          background: 'transparent',
-          border: 'none',
-          opacity: delivered ? 0.35 : 1,
-          cursor: onClick && !delivered ? 'pointer' : 'default',
-          padding: 0,
-        }}
+        className={[
+          'city-card-compact',
+          delivered ? 'city-card-compact--delivered' : '',
+          onClick && !delivered ? 'city-card-compact--clickable' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         <div
+          className={markerClass}
           style={{
-            width: 12,
-            height: 12,
-            borderRadius: 3,
             background: delivered ? 'var(--highlight)' : supplyColor,
-            boxShadow: current ? 'var(--glow-active)' : undefined,
-            border: current ? '2px solid var(--active)' : '1px solid var(--line)',
           }}
         />
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 8,
-            color: 'var(--text-faint)',
-          }}
-        >
-          {city.slice(0, 3)}
-        </span>
+        <span className="city-card-compact__label">{abbreviateCity(city)}</span>
       </button>
     )
   }

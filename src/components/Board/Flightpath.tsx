@@ -17,9 +17,9 @@ export function Flightpath({ onDeliver }: FlightpathProps) {
   )
 
   return (
-    <div className="relative w-full h-[120px]" aria-label="Flightpath with 24 cities">
+    <div className="flightpath" aria-label="Flightpath with 24 cities">
       <svg
-        className="absolute inset-0 w-full h-full"
+        className="flightpath__svg"
         viewBox="0 0 1200 120"
         preserveAspectRatio="none"
       >
@@ -32,7 +32,7 @@ export function Flightpath({ onDeliver }: FlightpathProps) {
         />
       </svg>
 
-      <div className="absolute inset-0 flex items-end justify-between px-2 pb-1">
+      <div className="flightpath__cities">
         {cities.map((city, i) => {
           const angle = (i / (cities.length - 1)) * Math.PI
           const xPct = 2 + (i / (cities.length - 1)) * 96
@@ -45,19 +45,14 @@ export function Flightpath({ onDeliver }: FlightpathProps) {
           return (
             <div
               key={city.id}
-              className="absolute"
+              className="flightpath__city"
               style={{
                 left: `${xPct}%`,
                 bottom: `${12 + yOffset * 0.3}px`,
-                transform: 'translateX(-50%)',
               }}
             >
               {planePosition === city.id && (
-                <Plane
-                  size={14}
-                  className="mx-auto mb-0.5"
-                  style={{ color: 'var(--plane)' }}
-                />
+                <Plane size={14} className="flightpath__plane" />
               )}
               <CityCard
                 city={city.name}
