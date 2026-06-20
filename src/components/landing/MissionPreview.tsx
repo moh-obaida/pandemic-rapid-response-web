@@ -1,68 +1,55 @@
-import { assetManifest, cityImagePathById, dieImagePath, crateImagePath } from '../../lib/assetManifest'
+import {
+  assetManifest,
+  cityImagePathById,
+  dieImagePath,
+  crateImagePath,
+} from '../../lib/assetManifest'
+import { BoardTableFrame } from './BoardTableFrame'
 
 interface MissionPreviewProps {
-  large?: boolean
+  /** Hero-sized preview inside mission table frame */
+  variant?: 'hero' | 'compact'
 }
 
-export function MissionPreview({ large = false }: MissionPreviewProps) {
-  const scale = large ? 1.15 : 1
-
+export function MissionPreview({ variant = 'hero' }: MissionPreviewProps) {
   return (
     <div
-      className="mission-preview"
-      style={large ? { width: 'min(100%, 380px)', transform: `scale(${scale})` } : undefined}
-      aria-hidden
+      className={`mission-preview mission-preview--${variant}`}
+      aria-hidden={variant === 'hero'}
     >
-      <span className="mission-preview__radar" />
-      <img
-        src={assetManifest.board.planeBoard}
-        alt=""
-        className="mission-preview__board"
-        draggable={false}
-      />
-      <div className="mission-preview__timer">02:00</div>
-      <img
-        src={cityImagePathById(0)}
-        alt=""
-        className="mission-preview__city mission-preview__city--1"
-        draggable={false}
-      />
-      <img
-        src={cityImagePathById(5)}
-        alt=""
-        className="mission-preview__city mission-preview__city--2"
-        draggable={false}
-      />
-      <img
-        src={cityImagePathById(12)}
-        alt=""
-        className="mission-preview__city mission-preview__city--3"
-        draggable={false}
-      />
-      <img
-        src={dieImagePath('plane')}
-        alt=""
-        className="mission-preview__die mission-preview__die--1"
-        draggable={false}
-      />
-      <img
-        src={dieImagePath('vaccine')}
-        alt=""
-        className="mission-preview__die mission-preview__die--2"
-        draggable={false}
-      />
-      <img
-        src={crateImagePath('water')}
-        alt=""
-        className="mission-preview__crate mission-preview__crate--1"
-        draggable={false}
-      />
-      <img
-        src={crateImagePath('food')}
-        alt=""
-        className="mission-preview__crate mission-preview__crate--2"
-        draggable={false}
-      />
+      <BoardTableFrame label="Aircraft command table preview">
+        <div className="mission-preview__board-wrap">
+          <img
+            src={assetManifest.board.planeBoard}
+            alt=""
+            className="mission-table__board mission-preview__board"
+            draggable={false}
+          />
+          <div className="mission-preview__hud">
+            <span className="mission-preview__timer">02:00</span>
+            <span className="mission-preview__hud-label">Mission clock</span>
+          </div>
+        </div>
+      </BoardTableFrame>
+
+      <div className="mission-preview__orbit">
+        <img
+          src={cityImagePathById(3)}
+          alt=""
+          className="mission-preview__float mission-preview__float--city"
+          draggable={false}
+        />
+        <div className="mission-preview__dice-cluster">
+          <img src={dieImagePath('plane')} alt="" draggable={false} />
+          <img src={dieImagePath('vaccine')} alt="" draggable={false} />
+        </div>
+        <img
+          src={crateImagePath('water')}
+          alt=""
+          className="mission-preview__float mission-preview__float--crate"
+          draggable={false}
+        />
+      </div>
     </div>
   )
 }
