@@ -29,9 +29,9 @@ export function RolesPage() {
           gap: 16,
         }}
       >
-        {ROLES.map((r, i) => (
+        {ROLES.map((r) => (
           <div key={r.id}>
-            <RoleCard role={r.name} ability={r.ability} playerIndex={i} />
+            <RoleCard role={r.name} roleId={r.id} ability={r.ability} />
             <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '8px 0 0 4px' }}>
               Tip: {TIPS[r.id]}
             </p>

@@ -3,50 +3,21 @@ import { Link } from 'react-router-dom'
 
 export function Footer() {
   return (
-    <footer
-      style={{
-        borderTop: '1px solid var(--line)',
-        padding: '32px var(--gutter)',
-        marginTop: 'auto',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 'var(--content-max)',
-          margin: '0 auto',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 24,
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
+    <footer className="mission-footer">
+      <div className="mission-footer__inner">
         <div>
-          <img src="/logos/prr-wordmark.svg" alt="PRR" height={28} />
-          <p
-            style={{
-              fontSize: 12,
-              color: 'var(--text-faint)',
-              marginTop: 8,
-              maxWidth: 320,
-            }}
-          >
-            Fan-made online companion for Pandemic: Rapid Response. Not affiliated
-            with Z-Man Games.
+          <img src="/logos/prr-wordmark.svg" alt="PRR" height={26} />
+          <p className="mission-footer__note">
+            Private fan prototype for playing Pandemic: Rapid Response online with friends. Not
+            affiliated with Z-Man Games or any official publisher.
           </p>
         </div>
-        <nav style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        <nav className="mission-footer__links">
           <FooterLink to="/rules">Rules</FooterLink>
           <FooterLink to="/roles">Roles</FooterLink>
-          <FooterLink to="/faq">FAQ</FooterLink>
+          <FooterLink to="/how-to-play">How to Play</FooterLink>
           <FooterLink to="/about">About</FooterLink>
           <FooterLink to="/privacy">Privacy</FooterLink>
-          <a
-            href="mailto:feedback@prr-game.com"
-            style={{ color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none' }}
-          >
-            Contact
-          </a>
         </nav>
       </div>
     </footer>
@@ -55,15 +26,7 @@ export function Footer() {
 
 function FooterLink({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link
-      to={to}
-      style={{
-        color: 'var(--text-dim)',
-        fontSize: 14,
-        textDecoration: 'none',
-        fontFamily: 'var(--font-body)',
-      }}
-    >
+    <Link to={to} className="mission-footer__link">
       {children}
     </Link>
   )

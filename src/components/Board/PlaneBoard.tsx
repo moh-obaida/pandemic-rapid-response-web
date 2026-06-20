@@ -1,6 +1,7 @@
 import { RoomTile } from '../ds/RoomTile'
 import { SupplyCrate } from '../ds/SupplyCrate'
 import { useGameStore } from '../../store/gameStore'
+import { getCratesInRoom, getCratesInCargo } from '../../lib/engine/selectors'
 import type { RoomId } from '../../types/board'
 
 const ROOM_LAYOUT: { id: RoomId; grid: string }[] = [
@@ -20,8 +21,9 @@ interface PlaneBoardProps {
 }
 
 export function PlaneBoard({ onRoomClick, selectedRoom }: PlaneBoardProps) {
-  const supplies = useGameStore((s) => s.gameState.supplies)
-  const timeTokens = useGameStore((s) => s.gameState.timeTokens)
+  const snapshot = useGameStore((s) => s.snapshot)
+  const hqTokens = snapshot?.hqTokens ?? 0
+  const players = snapshot?.players ?? []
 
   return (
     <div
@@ -35,8 +37,9 @@ export function PlaneBoard({ onRoomClick, selectedRoom }: PlaneBoardProps) {
       aria-label="Plane board with 8 rooms"
     >
       {ROOM_LAYOUT.map(({ id, grid }) => {
-        const roomSupplies = supplies.filter((s) => s.room === id && !s.inCargo)
-        const cargoSupplies = id === 'cargo' ? supplies.filter((s) => s.inCargo) : []
+        const roomCrates = snapshot ? getCratesInRoom(snapshot, id) : []
+        const cargoCrates = id === 'cargo' && snapshot ? getCratesInCargo(snapshot) : []
+        const occupants = players.filter((p) => p.position === id).length
 
         return (
           <div key={id} className={grid}>
@@ -53,13 +56,16 @@ export function PlaneBoard({ onRoomClick, selectedRoom }: PlaneBoardProps) {
                     color: 'var(--text-dim)',
                   }}
                 >
-                  ×{timeTokens}
+                  HQ ×{hqTokens}
                 </span>
               )}
-              {roomSupplies.slice(0, 4).map((s) => (
+              {occupants > 0 && (
+                <span className="text-xs text-muted">{occupants} player(s)</span>
+              )}
+              {roomCrates.slice(0, 4).map((s) => (
                 <SupplyCrate key={s.id} type={s.type} size={28} />
               ))}
-              {cargoSupplies.slice(0, 6).map((s) => (
+              {cargoCrates.slice(0, 6).map((s) => (
                 <SupplyCrate key={s.id} type={s.type} size={28} inCargo />
               ))}
             </RoomTile>

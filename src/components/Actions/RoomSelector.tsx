@@ -17,19 +17,17 @@ export function RoomSelector({
   return (
     <div className="flex flex-col gap-1" aria-label="Room selector">
       <span className="text-xs text-muted font-body uppercase tracking-wider">
-        {selectedDieId ? 'Select a room' : 'Select a die first'}
+        {selectedDieId ? 'Assign die to room' : 'Select room to move or assign'}
       </span>
       <div className="flex flex-wrap gap-1">
         {assignableRooms.map((room) => (
           <button
             key={room.id}
             type="button"
-            disabled={!selectedDieId}
             onClick={() => onRoomSelect(room.id)}
             className={`
-              px-2 py-1 rounded text-xs font-body transition-all
+              px-2 py-1 rounded text-xs font-body transition-all cursor-pointer hover:brightness-125
               ${selectedRoom === room.id ? 'ring-2 ring-primary' : ''}
-              ${selectedDieId ? 'hover:brightness-125 cursor-pointer' : 'opacity-40 cursor-not-allowed'}
             `}
             style={{
               backgroundColor: room.color + '44',

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ROLES, DIFFICULTY_CONFIG } from '../../lib/constants'
-import type { RoleId } from '../../types/board'
+import { DIFFICULTY_CONFIG } from '../../lib/constants'
 import type { Difficulty } from '../../types/game'
 import {
   isFirebaseConfigured,
@@ -20,26 +19,15 @@ import { Users, Plus, LogIn, Wifi, WifiOff } from 'lucide-react'
 
 interface LobbyModalProps {
   onGameStart: () => void
+  initialMode?: 'menu' | 'create' | 'join'
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  marginTop: 4,
-  padding: '10px 12px',
-  borderRadius: 'var(--radius-md)',
-  background: 'var(--bg-900)',
-  border: '1px solid var(--line)',
-  color: 'var(--text)',
-  fontFamily: 'var(--font-body)',
-  fontSize: 14,
-}
-
-export function LobbyModal({ onGameStart }: LobbyModalProps) {
-  const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu')
+export function LobbyModal({ onGameStart, initialMode = 'menu' }: LobbyModalProps) {
+  const [mode, setMode] = useState<'menu' | 'create' | 'join'>(initialMode)
   const [name, setName] = useState('')
   const [roomCode, setRoomCode] = useState('')
-  const [role, setRole] = useState<RoleId>('analyst')
   const [difficulty, setDifficulty] = useState<Difficulty>('normal')
+  const [crisisEnabled, setCrisisEnabled] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -66,10 +54,11 @@ export function LobbyModal({ onGameStart }: LobbyModalProps) {
         difficulty,
         aiReplacement: false,
         maxPlayers: 4,
+        crisisEnabled,
       }
       const { code, playerId } = useLocal
-        ? await createRoomLocal(name.trim(), settings, role)
-        : await createRoom(name.trim(), settings, role)
+        ? await createRoomLocal(name.trim(), settings)
+        : await createRoom(name.trim(), settings)
       setRoom(code, playerId)
       setPlayerName(name.trim())
       track('room_created', { difficulty, player_count: 1 })
@@ -98,11 +87,11 @@ export function LobbyModal({ onGameStart }: LobbyModalProps) {
       const useLocal = !firebaseReady
       setLocalMode(useLocal)
       const playerId = useLocal
-        ? await joinRoomLocal(roomCode.trim().toUpperCase(), name.trim(), role)
-        : await joinRoom(roomCode.trim().toUpperCase(), name.trim(), role)
+        ? await joinRoomLocal(roomCode.trim().toUpperCase(), name.trim())
+        : await joinRoom(roomCode.trim().toUpperCase(), name.trim())
       setRoom(roomCode.trim().toUpperCase(), playerId)
       setPlayerName(name.trim())
-      track('room_joined', { role })
+      track('room_joined', {})
       onGameStart()
     } catch (e) {
       const msg = e instanceof Error ? e.message : ''
@@ -116,22 +105,15 @@ export function LobbyModal({ onGameStart }: LobbyModalProps) {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-app)',
-        padding: 24,
-      }}
-    >
-      <Panel style={{ width: 520, boxShadow: 'var(--shadow-modal)' }} padding={32}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+    <div className="mission-room">
+      <Panel className="mission-room__panel glass-panel glass-panel--accent-top" padding={32}>
+        <div className="mission-room__header">
           <Link to="/">
-            <img src="/logos/prr-full.svg" alt="PRR" style={{ height: 48, marginBottom: 12 }} />
+            <img src="/logos/prr-full.svg" alt="Pandemic Rapid Response" style={{ height: 44 }} />
           </Link>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 8 }}>
+          <h1 className="mission-room__title">Mission Room Access</h1>
+          <p className="mission-room__subtitle">Create or join a private crew briefing</p>
+          <div className="mission-room__badge-row">
             {firebaseReady ? (
               <Badge tone="valid">
                 <Wifi size={12} /> Online Ready
@@ -145,9 +127,9 @@ export function LobbyModal({ onGameStart }: LobbyModalProps) {
         </div>
 
         {mode === 'menu' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="mission-room__stack">
             <Button full size="lg" icon={<Plus size={18} />} onClick={() => setMode('create')}>
-              Create Room
+              Start Mission
             </Button>
             <Button full size="lg" variant="secondary" icon={<LogIn size={18} />} onClick={() => setMode('join')}>
               Join Room
@@ -156,100 +138,74 @@ export function LobbyModal({ onGameStart }: LobbyModalProps) {
         )}
 
         {(mode === 'create' || mode === 'join') && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <label>
-              <span className="ds-label">Your Name</span>
+          <div className="mission-room__stack">
+            <label className="mission-room__field">
+              <span className="ds-label">Your callsign</span>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                style={inputStyle}
+                className="mission-room__input"
                 placeholder="Commander"
                 maxLength={20}
               />
             </label>
 
             {mode === 'join' && (
-              <label>
-                <span className="ds-label">Room Code</span>
+              <label className="mission-room__field">
+                <span className="ds-label">Room code</span>
                 <input
                   type="text"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                  style={{ ...inputStyle, fontFamily: 'var(--font-mono)', letterSpacing: '0.2em' }}
+                  className="mission-room__input mission-room__input--code"
                   placeholder="ABC123"
                   maxLength={6}
                 />
               </label>
             )}
 
-            <div>
-              <span className="ds-label">Role</span>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 4,
-                  marginTop: 4,
-                  maxHeight: 160,
-                  overflowY: 'auto',
-                }}
-              >
-                {ROLES.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setRole(r.id)}
-                    style={{
-                      padding: '8px',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'left',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      background: role === r.id ? 'var(--accent-soft)' : 'var(--bg-900)',
-                      border: role === r.id ? '1px solid var(--accent)' : '1px solid var(--line-soft)',
-                      color: 'var(--text-dim)',
-                    }}
-                  >
-                    <div style={{ fontWeight: 600, color: 'var(--text)' }}>{r.name}</div>
-                    <div style={{ fontSize: 10, opacity: 0.8 }}>{r.ability}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {mode === 'create' && (
-              <div>
-                <span className="ds-label">Difficulty</span>
-                <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                  {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDifficulty(d)}
-                      style={{
-                        flex: 1,
-                        padding: '8px',
-                        borderRadius: 'var(--radius-md)',
-                        fontSize: 12,
-                        cursor: 'pointer',
-                        background: difficulty === d ? 'var(--accent)' : 'var(--bg-900)',
-                        color: difficulty === d ? '#fff' : 'var(--text-dim)',
-                        border: '1px solid var(--line-soft)',
-                      }}
-                    >
-                      {DIFFICULTY_CONFIG[d].label}
-                    </button>
-                  ))}
+              <>
+                <div className="mission-room__field">
+                  <span className="ds-label">Difficulty</span>
+                  <div className="mission-room__diff-grid">
+                    {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDifficulty(d)}
+                        className={[
+                          'mission-room__diff-btn',
+                          difficulty === d ? 'mission-room__diff-btn--active' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        {DIFFICULTY_CONFIG[d].label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+                <label className="mission-room__checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={crisisEnabled}
+                    onChange={(e) => setCrisisEnabled(e.target.checked)}
+                  />
+                  <span className="ds-label" style={{ margin: 0 }}>
+                    Crisis cards enabled
+                  </span>
+                </label>
+                <p className="mission-room__note">
+                  All 7 crew roles are assigned randomly when the mission starts.
+                </p>
+              </>
             )}
 
-            {error && (
-              <p style={{ color: 'var(--error)', fontSize: 14, margin: 0 }}>{error}</p>
-            )}
+            {error && <p className="mission-room__error">{error}</p>}
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="mission-room__actions">
               <Button variant="ghost" onClick={() => setMode('menu')}>
                 Back
               </Button>
@@ -259,7 +215,7 @@ export function LobbyModal({ onGameStart }: LobbyModalProps) {
                 disabled={loading}
                 icon={<Users size={14} />}
               >
-                {loading ? 'Connecting...' : mode === 'create' ? 'Create & Enter' : 'Join Game'}
+                {loading ? 'Connecting…' : mode === 'create' ? 'Create Room' : 'Join with Code'}
               </Button>
             </div>
           </div>

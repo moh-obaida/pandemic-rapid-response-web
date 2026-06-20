@@ -1,216 +1,179 @@
 import { useCallback } from 'react'
-import { useGameStore, getCurrentPlayer } from '../store/gameStore'
+import { useGameStore, isHost } from '../store/gameStore'
 import {
-  assignDieToRoom,
-  unassignDie,
-  loadSuppliesToCargo,
-  activateRoomForPlayer,
-} from '../lib/gameLogic'
-import {
-  calculateWaste,
-  checkWinCondition,
-  checkLoseCondition,
-  deliverToCity,
-  allPlayersSubmitted,
-  createSupplyFromRoom,
-  createDice,
-} from '../lib/rules'
+  getCurrentPlayerView,
+  getPlayerViews,
+} from '../lib/engine/selectors'
+import { getRerollsRemaining } from '../lib/engine/getLegalActions'
+import { getRerollsMax } from '../lib/engine/setup'
 import type { RoomId } from '../types/board'
+import type { DieFace } from '../lib/constants/dice'
 import {
   isFirebaseConfigured,
-  syncFullRoom,
-  syncFullRoomLocal,
-  submitRoomAssignment,
+  syncSnapshot,
+  syncSnapshotLocal,
+  submitPendingAction,
 } from '../lib/firebase'
-import { TIMER_SECONDS } from '../lib/constants'
 import { track } from '../lib/analytics'
 
 export function useGame() {
   const store = useGameStore()
-  const currentPlayer = getCurrentPlayer()
+  const snapshot = store.snapshot
+  const playerId = store.playerId
+  const currentPlayer = snapshot && playerId
+    ? getCurrentPlayerView(snapshot, playerId)
+    : undefined
+  const playerViews = snapshot ? getPlayerViews(snapshot) : []
 
-  const assignDice = useCallback(
-    (dieId: string, roomId: RoomId) => {
-      if (!currentPlayer) return
-      const updated = assignDieToRoom(currentPlayer, dieId, roomId)
-      if (!updated) return
-      store.updateLocalPlayer(updated)
-      store.selectDie(null)
+  const syncAfterDispatch = useCallback(async () => {
+    const { roomCode, localMode, snapshot: snap, status } = useGameStore.getState()
+    if (!roomCode || !snap || status !== 'playing') return
+    if (localMode) {
+      await syncSnapshotLocal(roomCode, snap)
+    } else if (isHost()) {
+      await syncSnapshot(roomCode, snap)
+    }
+  }, [])
+
+  const dispatchAndSync = useCallback(
+    async (action: Parameters<typeof store.dispatch>[0]) => {
+      const { roomCode, localMode, playerId: pid } = useGameStore.getState()
+
+      if (!localMode && isFirebaseConfigured() && !isHost()) {
+        if (!roomCode || !pid) return null
+        await submitPendingAction(roomCode, pid, action)
+        return null
+      }
+
+      const result = store.dispatch(action)
+      if (result) {
+        await syncAfterDispatch()
+        if (result.result) {
+          track('game_ended', {
+            result: result.result,
+            waste: result.waste,
+            cities_delivered: result.cities.filter((c) => c.status === 'delivered')
+              .length,
+          })
+        }
+      }
+      return result
     },
-    [currentPlayer, store]
+    [store, syncAfterDispatch]
   )
 
-  const removeAssignment = useCallback(
-    (dieId: string) => {
-      if (!currentPlayer) return
-      store.updateLocalPlayer(unassignDie(currentPlayer, dieId))
+  const rollDice = useCallback(async () => {
+    if (!playerId) return
+    await dispatchAndSync({ type: 'ROLL_DICE', playerId })
+  }, [playerId, dispatchAndSync])
+
+  const assignDie = useCallback(
+    async (dieId: string, roomId: RoomId, slotIndex: number) => {
+      if (!playerId) return
+      await dispatchAndSync({
+        type: 'ASSIGN_DIE',
+        playerId,
+        dieId,
+        roomId,
+        slotIndex,
+      })
+      store.clearSelection()
     },
-    [currentPlayer, store]
+    [playerId, dispatchAndSync, store]
   )
 
-  const activateRoom = useCallback(
+  const assignDieToFirstSlot = useCallback(
+    async (dieId: string, roomId: RoomId) => {
+      const snap = useGameStore.getState().snapshot
+      if (!snap) return
+      const slots = snap.roomSlots[roomId] ?? []
+      const slotIndex = slots.findIndex((s) => s === null)
+      if (slotIndex === -1) return
+      await assignDie(dieId, roomId, slotIndex)
+    },
+    [assignDie]
+  )
+
+  const activateRoomAction = useCallback(
     async (roomId: RoomId) => {
-      if (!currentPlayer) return
-      const { supplies } = activateRoomForPlayer(currentPlayer, roomId)
-      const newSupplies = [...store.gameState.supplies, ...supplies]
-      const gs = { ...store.gameState, supplies: newSupplies }
-      useGameStore.setState({ gameState: gs })
+      if (!playerId) return
+      await dispatchAndSync({ type: 'ACTIVATE_ROOM', playerId, roomId })
       store.setModal('roomActivation', false)
     },
-    [currentPlayer, store]
+    [playerId, dispatchAndSync, store]
   )
 
-  const submitAssignments = useCallback(async () => {
-    if (!currentPlayer || !store.roomCode) return
-    const submitted = { ...currentPlayer, submitted: true }
-    store.updateLocalPlayer(submitted)
+  const endTurn = useCallback(async () => {
+    if (!playerId) return
+    await dispatchAndSync({ type: 'END_TURN', playerId })
+  }, [playerId, dispatchAndSync])
 
-    if (store.localMode) {
-      const players = store.players.map((p) =>
-        p.id === submitted.id ? submitted : p
-      )
-      const allDone = allPlayersSubmitted(players)
-      if (allDone) {
-        await resolveRound(players)
-      } else {
-        await syncFullRoomLocal(store.roomCode, {
-          players: Object.fromEntries(players.map((p) => [p.id, p])),
-        })
-      }
-    } else {
-      await submitRoomAssignment(store.roomCode, currentPlayer.id, submitted)
-    }
-  }, [currentPlayer, store])
-
-  const deliver = useCallback(
-    async (cityId: number) => {
-      const { cities } = store.board
-      const { supplies, timeTokens } = store.gameState
-      const { cities: newCities, supplies: newSupplies } = deliverToCity(
-        cityId,
-        cities,
-        supplies
-      )
-      const gs = {
-        ...store.gameState,
-        supplies: newSupplies,
-        timeTokens: timeTokens - 1,
-      }
-      const board = { ...store.board, cities: newCities, planePosition: cityId }
-
-      if (checkWinCondition(newCities)) {
-        gs.result = 'win'
-        useGameStore.setState({ status: 'ended', gameState: gs, board })
-        store.setModal('gameEnd', true)
-        track('game_ended', { result: 'win', rounds: gs.round, waste: gs.waste, cities_delivered: newCities.filter((c) => c.delivered).length })
-      } else if (checkLoseCondition(gs)) {
-        gs.result = 'lose'
-        useGameStore.setState({ status: 'ended', gameState: gs, board })
-        store.setModal('gameEnd', true)
-        track('game_ended', { result: 'lose', rounds: gs.round, waste: gs.waste, cities_delivered: newCities.filter((c) => c.delivered).length })
-      } else {
-        useGameStore.setState({ gameState: gs, board })
-      }
-
-      if (store.roomCode) {
-        const sync = store.localMode ? syncFullRoomLocal : syncFullRoom
-        await sync(store.roomCode, { gameState: gs, board })
-      }
+  const rerollDice = useCallback(
+    async (dieIds: string[]) => {
+      if (!playerId) return
+      await dispatchAndSync({ type: 'REROLL', playerId, dieIds })
     },
-    [store]
+    [playerId, dispatchAndSync]
   )
 
-  const loadCargo = useCallback(
-    (supplyIds: string[]) => {
-      const supplies = loadSuppliesToCargo(store.gameState.supplies, supplyIds)
-      useGameStore.setState({
-        gameState: { ...store.gameState, supplies },
+  const moveToRoom = useCallback(
+    async (dieIds: string[], targetRoomId: RoomId) => {
+      if (!playerId) return
+      await dispatchAndSync({
+        type: 'SPEND_MOVE',
+        playerId,
+        dieIds,
+        targetRoomId,
       })
     },
-    [store]
+    [playerId, dispatchAndSync]
   )
 
-  const startNextRound = useCallback(async () => {
-    const players = store.players.map((p) => ({
-      ...p,
-      dice: createDice(),
-      submitted: false,
-      rerollsUsed: 0,
-    }))
-    const gs = {
-      ...store.gameState,
-      round: store.gameState.round + 1,
-      phase: 'assigning' as const,
-      timer: TIMER_SECONDS,
-      timerRunning: true,
-    }
-    useGameStore.setState({ players, gameState: gs })
-    if (store.roomCode) {
-      const sync = store.localMode ? syncFullRoomLocal : syncFullRoom
-      await sync(store.roomCode, {
-        players: Object.fromEntries(players.map((p) => [p.id, p])),
-        gameState: gs,
-      })
-    }
-  }, [store])
+  const flyPlane = useCallback(
+    async (dieIds: string[], direction: 'left' | 'right') => {
+      if (!playerId) return
+      await dispatchAndSync({ type: 'SPEND_FLY', playerId, dieIds, direction })
+    },
+    [playerId, dispatchAndSync]
+  )
+
+  const engineerFlip = useCallback(
+    async (dieId: string, targetFace: DieFace) => {
+      if (!playerId) return
+      await dispatchAndSync({ type: 'ENGINEER_FLIP', playerId, dieId, targetFace })
+    },
+    [playerId, dispatchAndSync]
+  )
+
+  const rerollsRemaining = snapshot && playerId
+    ? getRerollsRemaining(snapshot, playerId)
+    : 0
+  const rerollsMax = currentPlayer ? getRerollsMax(currentPlayer.role) : 0
 
   return {
     ...store,
+    selectedDieId: store.selectedDieIds[0] ?? null,
+    snapshot,
     currentPlayer,
-    assignDice,
-    removeAssignment,
-    activateRoom,
-    submitAssignments,
-    deliver,
-    loadCargo,
-    startNextRound,
+    playerViews,
+    rollDice,
+    assignDie,
+    assignDieToFirstSlot,
+    activateRoom: activateRoomAction,
+    endTurn,
+    rerollDice,
+    moveToRoom,
+    flyPlane,
+    engineerFlip,
+    rerollsRemaining,
+    rerollsMax,
     isOnline: isFirebaseConfigured() && !store.localMode,
-  }
-}
-
-async function resolveRound(
-  players: ReturnType<typeof useGameStore.getState>['players']
-) {
-  const store = useGameStore.getState()
-  let allSupplies = [...store.gameState.supplies]
-
-  for (const player of players) {
-    const rooms = new Set(
-      player.dice.map((d) => d.assignedRoom).filter(Boolean) as RoomId[]
-    )
-    for (const roomId of rooms) {
-      const matching = player.dice.filter((d) => d.assignedRoom === roomId)
-      const created = createSupplyFromRoom(roomId, matching.length)
-      allSupplies = [...allSupplies, ...created]
-    }
-  }
-
-  const wasteAdded = calculateWaste(players)
-  const gs = {
-    ...store.gameState,
-    supplies: allSupplies,
-    waste: Math.min(
-      store.gameState.wasteMax,
-      store.gameState.waste + wasteAdded
-    ),
-    phase: 'delivering' as const,
-    timerRunning: false,
-  }
-
-  if (checkLoseCondition(gs)) {
-    gs.result = 'lose'
-    useGameStore.setState({ status: 'ended', gameState: gs })
-    store.setModal('gameEnd', true)
-  } else if (checkWinCondition(store.board.cities)) {
-    gs.result = 'win'
-    useGameStore.setState({ status: 'ended', gameState: gs })
-    store.setModal('gameEnd', true)
-  } else {
-    useGameStore.setState({ gameState: gs })
-  }
-
-  if (store.roomCode) {
-    const sync = store.localMode ? syncFullRoomLocal : syncFullRoom
-    await sync(store.roomCode, { gameState: gs })
+    isMyTurn: snapshot?.activePlayerId === playerId,
+    turnStep: snapshot?.turnStep ?? 'roll',
+    isPausedByTimer: snapshot?.turnStep === 'pausedByTimer',
+    selectDie: (dieId: string | null) => {
+      if (!dieId) store.clearSelection()
+      else store.setSelectedDice([dieId])
+    },
   }
 }

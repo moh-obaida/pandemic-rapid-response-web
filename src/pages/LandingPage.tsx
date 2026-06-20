@@ -1,141 +1,213 @@
 import { Link } from 'react-router-dom'
-import type { ReactNode } from 'react'
 import { SiteLayout } from '../components/layout/SiteLayout'
 import { SeoHead } from '../components/layout/SeoHead'
 import { Button } from '../components/ds/Button'
+import { MissionPreview } from '../components/landing/MissionPreview'
 import { ROLES } from '../lib/constants'
-import { Users, Clock, Zap, Shield } from 'lucide-react'
+import { assetManifest, cityImagePathById } from '../lib/assetManifest'
+
+const STEPS = [
+  { num: '01', title: 'Roll dice', desc: 'Assign rolled dice to supply rooms on the aircraft.' },
+  { num: '02', title: 'Move through rooms', desc: 'Spend dice to move crew and position for loading.' },
+  { num: '03', title: 'Load cargo', desc: 'Activate rooms to pull crates into the limited cargo bay.' },
+  { num: '04', title: 'Fly and deliver', desc: 'Spend plane dice along the flightpath. Match each city exactly.' },
+]
+
+const PRESSURE = [
+  {
+    title: 'City cards',
+    desc: 'New cities appear as the timer runs out.',
+    img: cityImagePathById(3),
+  },
+  {
+    title: 'Cargo bay',
+    desc: 'Space is limited — load the right mix before you fly.',
+    img: assetManifest.crates.vaccine,
+  },
+  {
+    title: 'HQ tokens',
+    desc: 'HQ time tokens keep the mission alive when the clock hits zero.',
+    img: assetManifest.tokens.timeToken,
+  },
+  {
+    title: 'Waste track',
+    desc: 'Unmatched dice fill waste. Hit the limit and the mission ends.',
+    img: assetManifest.tokens.wasteMarker,
+  },
+  {
+    title: 'Mission timer',
+    desc: 'Two minutes per round. Pressure never stops.',
+    img: null,
+    timer: true,
+  },
+]
 
 export function LandingPage() {
   return (
     <SiteLayout>
       <SeoHead
-        title="PRR Online"
-        description="Play Pandemic: Rapid Response online — real-time cooperative board game with 2–4 players, 7 roles, and 4 difficulty levels."
+        title="Mission Briefing"
+        description="Cooperative aircraft logistics board game for 2–4 players."
         path="/"
       />
 
-      <section className="hero-section">
-        <div className="hero-content">
-          <div className="hero-text">
-            <img src="/logos/prr-full.svg" alt="Pandemic Rapid Response" className="hero-logo" />
-            <h1 className="hero-headline">Real-Time Logistics Crisis</h1>
-            <div className="hero-tagline">Medical chaos. Coordinated response. Two minutes to save them all.</div>
-            <p className="hero-description">
-              Lead your elite medical team through a global health crisis. Roll dice, coordinate resources, and deliver life-saving supplies to 24 cities before waste overwhelms your command center.
+      {/* 1. Mission Briefing Hero */}
+      <section className="mission-hero mission-hero--cinematic">
+        <div>
+          <div className="mission-hero__status">
+            <span className="mission-hero__status-dot" aria-hidden />
+            Mission briefing
+          </div>
+          <h1 className="mission-hero__headline">
+            The clock is running.
+            <br />
+            <em>Load the plane. Deliver the supplies.</em>
+            <br />
+            Save the cities.
+          </h1>
+          <p className="mission-hero__lede">
+            Operate a rapid-response aircraft with your crew. The board is the table — not a web form.
+          </p>
+          <div className="mission-hero__actions">
+            <Link to="/play" style={{ textDecoration: 'none' }}>
+              <Button size="lg">Start Mission</Button>
+            </Link>
+            <Link to="/play?join=1" style={{ textDecoration: 'none' }}>
+              <Button variant="secondary" size="lg">
+                Join Room
+              </Button>
+            </Link>
+            <Link to="/rules" style={{ textDecoration: 'none' }}>
+              <Button variant="ghost" size="lg">
+                View Rules
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <div className="mission-hero__visual mission-hero__visual--large">
+          <MissionPreview large />
+        </div>
+      </section>
+
+      {/* 2. Live Board Preview */}
+      <section className="mission-section mission-section--board">
+        <div className="mission-board-preview">
+          <div className="mission-board-preview__visual">
+            <img
+              src={assetManifest.board.planeBoard}
+              alt="PRR aircraft board with supply rooms, cargo bay, and flightpath"
+              className="mission-board-preview__img"
+            />
+          </div>
+          <div className="mission-board-preview__copy">
+            <p className="mission-section__eyebrow">Live board</p>
+            <h2 className="mission-section__title">Digital aircraft command table</h2>
+            <p className="mission-section__subtitle">
+              A real-time cooperative mission played on a digital aircraft board. Click rooms, assign
+              dice, load crates, and fly the flightpath — together.
             </p>
-            <div className="hero-buttons">
-              <Link to="/play" style={{ textDecoration: 'none' }}>
-                <Button size="lg">Play Now</Button>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. How the Mission Works */}
+      <section className="mission-section mission-section--tight">
+        <p className="mission-section__eyebrow">Operations protocol</p>
+        <h2 className="mission-section__title">How the mission works</h2>
+        <div className="mission-steps">
+          {STEPS.map((s) => (
+            <article key={s.num} className="mission-step glass-panel">
+              <span className="mission-step__num">{s.num}</span>
+              <h3 className="mission-step__title">{s.title}</h3>
+              <p className="mission-step__desc">{s.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Crew Roles */}
+      <section className="mission-section">
+        <p className="mission-section__eyebrow">Crew manifest</p>
+        <h2 className="mission-section__title">Crew roles</h2>
+        <p className="mission-section__subtitle">
+          Each crew member has a unique ability. Roles are assigned randomly at launch.
+        </p>
+        <div className="mission-roles">
+          {ROLES.map((r) => (
+            <Link key={r.id} to="/roles" className="mission-role-card" title={r.name}>
+              <img
+                src={assetManifest.cards.roles[r.id]}
+                alt={r.name}
+                className="mission-role-card__img"
+                loading="lazy"
+              />
+              <div className="mission-role-card__name">{r.name}</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. Cities, Cargo, and Timer */}
+      <section className="mission-section mission-section--tight">
+        <p className="mission-section__eyebrow">Mission pressure</p>
+        <h2 className="mission-section__title">Cities, cargo, and timer</h2>
+        <p className="mission-section__subtitle">
+          Cities appear as the timer runs out. Cargo space is limited. HQ time tokens keep the mission
+          alive. Waste can end the game.
+        </p>
+        <div className="mission-pressure">
+          {PRESSURE.map((item) => (
+            <article key={item.title} className="mission-pressure__item glass-panel">
+              <div className="mission-pressure__visual">
+                {item.timer ? (
+                  <span className="mission-pressure__timer">02:00</span>
+                ) : (
+                  <img src={item.img!} alt="" className="mission-pressure__icon" />
+                )}
+              </div>
+              <h3 className="mission-pressure__title">{item.title}</h3>
+              <p className="mission-pressure__desc">{item.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* 6. Create or Join Room */}
+      <section className="mission-section">
+        <div className="mission-multi">
+          <div>
+            <p className="mission-section__eyebrow">Mission access</p>
+            <h2 className="mission-section__title">Create or join room</h2>
+            <p className="mission-section__subtitle">
+              Create a private mission room. Share the room code. Start when the crew is ready.
+            </p>
+            <div className="mission-hero__actions">
+              <Link to="/play?create=1" style={{ textDecoration: 'none' }}>
+                <Button size="lg">Create Room</Button>
               </Link>
-              <Link to="/how-to-play" style={{ textDecoration: 'none' }}>
+              <Link to="/play?join=1" style={{ textDecoration: 'none' }}>
                 <Button variant="secondary" size="lg">
-                  How to Play
+                  Join with Code
                 </Button>
               </Link>
             </div>
-            <p className="hero-status">
-              Join medical professionals in high-stakes cooperative play
-            </p>
           </div>
-          <img
-            src="/screenshots/board-preview.png"
-            alt="PRR game board"
-            className="hero-image"
-            loading="eager"
-          />
-        </div>
-      </section>
-
-      <section className="gameplay-section">
-        <div className="section-container">
-          <div className="section-header">
-            <h2 className="section-title">The Protocol</h2>
-            <p className="section-subtitle">Master the four-phase coordination system</p>
-          </div>
-          <div className="gameplay-grid">
-            {[
-              { step: '1', title: 'Roll', desc: 'All medical coordinators roll 6 dice simultaneously' },
-              { step: '2', title: 'Assign', desc: 'Allocate dice to specialized supply rooms in real time' },
-              { step: '3', title: 'Activate', desc: 'Process supplies and manage operational waste' },
-              { step: '4', title: 'Deliver', desc: 'Deploy supplies to critical care locations worldwide' },
-            ].map((s) => (
-              <div key={s.step} className="gameplay-card">
-                <span className="gameplay-step">{s.step}</span>
-                <h3 className="gameplay-title">{s.title}</h3>
-                <p className="gameplay-desc">{s.desc}</p>
-              </div>
-            ))}
+          <div className="mission-multi__aside glass-panel">
+            <p className="mission-multi__label">Example room code</p>
+            <p className="mission-multi__code">7KQ2</p>
+            <p className="mission-multi__hint">Share this code with up to 3 crew members.</p>
           </div>
         </div>
       </section>
 
-      <section className="features-section">
-        <div className="section-container">
-          <div className="section-header">
-            <h2 className="section-title">Command Center Capabilities</h2>
-            <p className="section-subtitle">Professional-grade multiplayer logistics system</p>
-          </div>
-          <div className="features-grid">
-            <Feature icon={<Users size={24} />} title="2–4 Players" desc="Secure real-time team coordination" />
-            <Feature icon={<Clock size={24} />} title="120-Second Rounds" desc="Intense synchronized operations" />
-            <Feature icon={<Zap size={24} />} title="7 Specializations" desc="Unique tactical expertise per role" />
-            <Feature icon={<Shield size={24} />} title="4 Difficulty Levels" desc="From training to heroic operations" />
-          </div>
-        </div>
+      {/* 7. Final CTA */}
+      <section className="mission-cta-band">
+        <p className="mission-section__eyebrow">Launch clearance</p>
+        <h2 className="mission-cta-band__title">Ready for launch?</h2>
+        <Link to="/play" style={{ textDecoration: 'none' }}>
+          <Button size="lg">Start Mission</Button>
+        </Link>
       </section>
-
-      <section className="roles-section">
-        <div className="section-container">
-          <div className="section-header">
-            <h2 className="section-title">Medical Specialists</h2>
-            <p className="section-subtitle">Choose your expertise and lead the response</p>
-          </div>
-          <div className="roles-grid">
-            {ROLES.slice(0, 6).map((r) => (
-              <div key={r.id} className="role-card">
-                <h3 className="role-name">{r.name}</h3>
-                <p className="role-ability">{r.ability}</p>
-              </div>
-            ))}
-          </div>
-          <Link to="/roles" className="view-all-link">
-            Explore all specialists →
-          </Link>
-        </div>
-      </section>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'VideoGame',
-            name: 'Pandemic Rapid Response Online',
-            description: 'Real-time cooperative board game for 2-4 players',
-            gamePlatform: 'Web browser',
-            numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 4 },
-            genre: 'Cooperative board game',
-          }),
-        }}
-      />
     </SiteLayout>
-  )
-}
-
-function Feature({
-  icon,
-  title,
-  desc,
-}: {
-  icon: ReactNode
-  title: string
-  desc: string
-}) {
-  return (
-    <div className="feature-card">
-      <div className="feature-icon">{icon}</div>
-      <h3 className="feature-title">{title}</h3>
-      <p className="feature-desc">{desc}</p>
-    </div>
   )
 }

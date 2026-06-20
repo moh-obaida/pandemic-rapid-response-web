@@ -34,8 +34,8 @@ describe('rules', () => {
     ).toBe(true)
   })
 
-  it('analyst gets 3 rerolls', () => {
-    expect(getRoleRerollMax('analyst')).toBe(3)
+  it('analyst gets 4 rerolls', () => {
+    expect(getRoleRerollMax('analyst')).toBe(4)
   })
 
   it('creates 6 dice per player', () => {

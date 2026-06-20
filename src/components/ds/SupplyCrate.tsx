@@ -1,14 +1,5 @@
-import { Syringe, Apple, Zap, Droplets, HeartPulse } from 'lucide-react'
 import type { SupplyType } from '../../types/board'
-
-const SUPPLY: Record<string, { color: string; Icon: typeof Syringe }> = {
-  vaccine: { color: 'var(--room-vaccine)', Icon: Syringe },
-  food: { color: 'var(--room-food)', Icon: Apple },
-  power: { color: 'var(--room-power)', Icon: Zap },
-  firstaid: { color: 'var(--room-firstaid)', Icon: HeartPulse },
-  firstAid: { color: 'var(--room-firstaid)', Icon: HeartPulse },
-  water: { color: 'var(--room-water)', Icon: Droplets },
-}
+import { crateImagePath } from '../../lib/assetManifest'
 
 interface SupplyCrateProps {
   type: SupplyType | string
@@ -25,9 +16,8 @@ export function SupplyCrate({
   inCargo,
   onClick,
 }: SupplyCrateProps) {
-  const key = type === 'firstAid' ? 'firstAid' : type
-  const s = SUPPLY[key] || SUPPLY.vaccine
-  const { Icon } = s
+  const key = (type === 'firstAid' ? 'firstAid' : type) as SupplyType
+  const src = crateImagePath(key)
 
   return (
     <div
@@ -35,46 +25,27 @@ export function SupplyCrate({
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
-      className="animate-fade-in"
+      className="game-crate-img"
       style={{
         position: 'relative',
+        display: 'inline-block',
         width: size,
         height: size,
-        borderRadius: 'var(--radius-crate)',
-        background: s.color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--text-on-color)',
-        boxShadow: inCargo ? 'var(--glow-valid)' : 'var(--shadow-piece)',
-        cursor: onClick ? 'pointer' : 'default',
         outline: inCargo ? '2px solid var(--highlight)' : undefined,
+        cursor: onClick ? 'pointer' : 'default',
       }}
+      aria-label={`${key} crate`}
     >
-      <Icon size={size * 0.5} strokeWidth={2} />
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        className="game-crate-img__art"
+        draggable={false}
+      />
       {count != null && (
-        <span
-          style={{
-            position: 'absolute',
-            bottom: -6,
-            right: -6,
-            minWidth: 18,
-            height: 18,
-            padding: '0 4px',
-            borderRadius: '999px',
-            background: 'var(--bg-900)',
-            color: '#fff',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1.5px solid var(--bg-app)',
-          }}
-        >
-          {count}
-        </span>
+        <span className="game-crate-img__count">{count}</span>
       )}
     </div>
   )

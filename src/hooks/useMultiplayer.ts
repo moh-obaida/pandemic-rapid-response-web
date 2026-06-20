@@ -5,14 +5,55 @@ import {
   subscribeToRoom,
   subscribeToRoomLocal,
   initFirebase,
+  syncFullRoom,
+  syncFullRoomLocal,
+  clearPendingAction,
 } from '../lib/firebase'
-import { allPlayersSubmitted } from '../lib/rules'
+import { applyAction, autoResolveWasteRoll } from '../lib/engine'
+import { isRuleError } from '../types/engine'
+import type { FirebaseRoom } from '../types/firebase'
+
+async function processPendingAction(
+  roomCode: string,
+  room: FirebaseRoom,
+  localMode: boolean
+): Promise<void> {
+  const pending = room.pendingAction
+  if (!pending || !room.snapshot) return
+
+  let result = applyAction(room.snapshot, pending.action)
+  if (isRuleError(result)) {
+    await clearPendingAction(roomCode, localMode)
+    return
+  }
+
+  if (result.pendingWasteRoll) {
+    result = autoResolveWasteRoll(result)
+  }
+
+  const updates: Partial<FirebaseRoom> = {
+    snapshot: result,
+    pendingAction: null,
+  }
+  if (result.result) {
+    updates.status = 'ended'
+  }
+
+  if (localMode) {
+    await syncFullRoomLocal(roomCode, updates)
+  } else {
+    await syncFullRoom(roomCode, updates)
+  }
+}
 
 export function useMultiplayer() {
   const roomCode = useGameStore((s) => s.roomCode)
   const localMode = useGameStore((s) => s.localMode)
+  const playerId = useGameStore((s) => s.playerId)
+  const hostId = useGameStore((s) => s.hostId)
   const syncFromFirebase = useGameStore((s) => s.syncFromFirebase)
-  const prevPlayersRef = useRef<string>('')
+  const isHost = playerId === hostId
+  const processingRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!roomCode) return
@@ -27,32 +68,30 @@ export function useMultiplayer() {
 
     const unsub = subscribe(roomCode, (room) => {
       if (!room) return
+
+      if (
+        isHost &&
+        room.pendingAction &&
+        room.pendingAction.id !== processingRef.current &&
+        room.status === 'playing'
+      ) {
+        processingRef.current = room.pendingAction.id
+        void processPendingAction(roomCode, room, localMode).finally(() => {
+          processingRef.current = null
+        })
+      }
+
       syncFromFirebase({
         status: room.status,
-        players: room.players,
-        gameState: room.gameState,
-        board: room.board,
+        lobbyPlayers: room.lobbyPlayers,
+        snapshot: room.snapshot,
         settings: room.settings,
         hostId: room.hostId,
       })
-
-      const playerKey = JSON.stringify(
-        Object.values(room.players).map((p) => ({
-          id: p.id,
-          submitted: p.submitted,
-        }))
-      )
-      if (
-        playerKey !== prevPlayersRef.current &&
-        room.status === 'playing' &&
-        allPlayersSubmitted(Object.values(room.players))
-      ) {
-        prevPlayersRef.current = playerKey
-      }
     })
 
     return unsub
-  }, [roomCode, localMode, syncFromFirebase])
+  }, [roomCode, localMode, syncFromFirebase, isHost])
 
   return { connected: Boolean(roomCode) }
 }

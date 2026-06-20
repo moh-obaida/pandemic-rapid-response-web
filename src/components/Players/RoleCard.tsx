@@ -5,7 +5,6 @@ import { RoleCard as DSRoleCard } from '../ds/RoleCard'
 interface RoleCardProps {
   roleId: RoleId
   compact?: boolean
-  playerIndex?: number
   active?: boolean
   name?: string
 }
@@ -13,7 +12,6 @@ interface RoleCardProps {
 export function RoleCard({
   roleId,
   compact,
-  playerIndex = 0,
   active,
   name,
 }: RoleCardProps) {
@@ -23,9 +21,9 @@ export function RoleCard({
   return (
     <DSRoleCard
       role={role.name}
+      roleId={roleId}
       name={name}
       ability={compact ? '' : role.ability}
-      playerIndex={playerIndex}
       active={active}
       compact={compact}
     />

@@ -1,31 +1,37 @@
 import { Die as DSDie } from '../ds/Die'
-import type { Die } from '../../types/game'
+import type { EngineDie } from '../../types/engine'
 
 interface DicePoolProps {
-  dice: Die[]
-  selectedDieId?: string | null
-  onDieClick?: (dieId: string) => void
+  dice: EngineDie[]
+  selectedDieIds?: string[]
+  onDieClick?: (dieId: string, additive: boolean) => void
   rolling?: boolean
+  disabled?: boolean
 }
 
 export function DicePool({
   dice,
-  selectedDieId,
+  selectedDieIds = [],
   onDieClick,
   rolling,
+  disabled,
 }: DicePoolProps) {
+  const handDice = dice.filter((d) => d.location === 'hand')
+
   return (
-    <div className="flex flex-wrap gap-1.5 justify-center" aria-label="Your dice pool">
-      {dice.map((die) => (
+    <div className="dice-pool" aria-label="Your dice pool">
+      {handDice.map((die) => (
         <DSDie
           key={die.id}
-          supplyType={die.value}
+          face={die.face}
           size={44}
-          selected={selectedDieId === die.id}
+          selected={selectedDieIds.includes(die.id)}
           locked={die.locked}
           rolling={rolling}
           onClick={
-            die.locked || !onDieClick ? undefined : () => onDieClick(die.id)
+            die.locked || !onDieClick || disabled
+              ? undefined
+              : (e) => onDieClick(die.id, e.shiftKey || e.metaKey || e.ctrlKey)
           }
         />
       ))}

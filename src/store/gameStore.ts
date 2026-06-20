@@ -1,39 +1,48 @@
 import { create } from 'zustand'
-import type { Player, GameState, GameSettings, GameStatus } from '../types/game'
-import type { BoardState, RoomId } from '../types/board'
+import type { GameSnapshot, GameAction } from '../types/engine'
+import type { PendingConfirm } from '../types/controls'
+import type { GameSettings, GameStatus } from '../types/game'
+import type { RoomId } from '../types/board'
 import type { ModalState } from '../types/ui'
-import { createInitialGameState, createInitialBoard, createDice } from '../lib/rules'
+import type { LobbyPlayer } from '../types/firebase'
+import { applyAction, autoResolveWasteRoll, isRuleError } from '../lib/engine'
+import { friendlyError } from '../lib/userErrors'
 
 interface GameStore {
   roomCode: string | null
   playerId: string | null
   playerName: string
   status: GameStatus
-  players: Player[]
-  gameState: GameState
-  board: BoardState
+  lobbyPlayers: LobbyPlayer[]
+  snapshot: GameSnapshot | null
   settings: GameSettings
   hostId: string
-  selectedDieId: string | null
+  selectedDieIds: string[]
   selectedRoom: RoomId | null
+  pendingConfirm: PendingConfirm | null
   modals: ModalState
   localMode: boolean
+  lastError: string | null
 
   setRoom: (code: string, playerId: string) => void
   setPlayerName: (name: string) => void
   setLocalMode: (local: boolean) => void
   syncFromFirebase: (data: {
     status: GameStatus
-    players: Record<string, Player>
-    gameState: GameState
-    board: BoardState
+    lobbyPlayers: Record<string, LobbyPlayer>
+    snapshot: GameSnapshot | null
     settings: GameSettings
     hostId: string
   }) => void
-  updateLocalPlayer: (player: Player) => void
-  selectDie: (dieId: string | null) => void
+  setSnapshot: (snapshot: GameSnapshot | null) => void
+  dispatch: (action: GameAction) => GameSnapshot | null
+  toggleDieSelection: (dieId: string, additive?: boolean) => void
+  setSelectedDice: (dieIds: string[]) => void
+  clearSelection: () => void
   selectRoom: (roomId: RoomId | null) => void
+  setPendingConfirm: (confirm: PendingConfirm | null) => void
   setModal: (key: keyof ModalState, open: boolean) => void
+  clearError: () => void
   reset: () => void
 }
 
@@ -41,6 +50,7 @@ const defaultSettings: GameSettings = {
   difficulty: 'normal',
   aiReplacement: false,
   maxPlayers: 4,
+  crisisEnabled: false,
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -48,40 +58,99 @@ export const useGameStore = create<GameStore>((set, get) => ({
   playerId: null,
   playerName: '',
   status: 'lobby',
-  players: [],
-  gameState: createInitialGameState(),
-  board: createInitialBoard(),
+  lobbyPlayers: [],
+  snapshot: null,
   settings: defaultSettings,
   hostId: '',
-  selectedDieId: null,
+  selectedDieIds: [],
   selectedRoom: null,
+  pendingConfirm: null,
   modals: { roomActivation: false, crisis: false, gameEnd: false },
   localMode: false,
+  lastError: null,
 
   setRoom: (code, playerId) => set({ roomCode: code, playerId }),
   setPlayerName: (name) => set({ playerName: name }),
   setLocalMode: (local) => set({ localMode: local }),
 
-  syncFromFirebase: (data) =>
+  syncFromFirebase: (data) => {
+    const prev = get()
+    const ended = data.snapshot?.result ?? null
+    const timerPaused = data.snapshot?.turnStep === 'pausedByTimer'
     set({
       status: data.status,
-      players: Object.values(data.players),
-      gameState: data.gameState,
-      board: data.board,
+      lobbyPlayers: Object.values(data.lobbyPlayers),
+      snapshot: data.snapshot,
       settings: data.settings,
       hostId: data.hostId,
-    }),
-
-  updateLocalPlayer: (player) => {
-    const { playerId, players } = get()
-    if (!playerId) return
-    set({
-      players: players.map((p) => (p.id === playerId ? player : p)),
+      ...(timerPaused
+        ? { selectedDieIds: [], pendingConfirm: null, selectedRoom: null }
+        : {}),
     })
+    if (ended && prev.status === 'playing' && !prev.modals.gameEnd) {
+      set({ status: 'ended', modals: { ...get().modals, gameEnd: true } })
+    }
   },
 
-  selectDie: (dieId) => set({ selectedDieId: dieId }),
+  setSnapshot: (snapshot) => set({ snapshot }),
+
+  dispatch: (action) => {
+    const { snapshot } = get()
+    if (!snapshot) return null
+
+    let result = applyAction(snapshot, action)
+    if (isRuleError(result)) {
+      set({ lastError: friendlyError(result.error) })
+      return null
+    }
+
+    if (result.pendingWasteRoll) {
+      result = autoResolveWasteRoll(result)
+    }
+
+    if (result.result) {
+      set({
+        snapshot: result,
+        status: 'ended',
+        modals: { ...get().modals, gameEnd: true },
+        lastError: null,
+        selectedDieIds: [],
+        pendingConfirm: null,
+      })
+    } else {
+      set({
+        snapshot: result,
+        lastError: null,
+        selectedDieIds: [],
+        pendingConfirm: null,
+      })
+    }
+
+    return result
+  },
+
+  toggleDieSelection: (dieId, additive = false) => {
+    const { selectedDieIds, pendingConfirm } = get()
+    if (pendingConfirm) return
+
+    if (!additive) {
+      const exists = selectedDieIds.includes(dieId)
+      set({ selectedDieIds: exists && selectedDieIds.length === 1 ? [] : [dieId] })
+      return
+    }
+
+    if (selectedDieIds.includes(dieId)) {
+      set({ selectedDieIds: selectedDieIds.filter((id) => id !== dieId) })
+    } else {
+      set({ selectedDieIds: [...selectedDieIds, dieId] })
+    }
+  },
+
+  setSelectedDice: (dieIds) => set({ selectedDieIds: dieIds }),
+  clearSelection: () => set({ selectedDieIds: [], selectedRoom: null }),
   selectRoom: (roomId) => set({ selectedRoom: roomId }),
+  setPendingConfirm: (confirm) => set({ pendingConfirm: confirm }),
+  clearError: () => set({ lastError: null }),
 
   setModal: (key, open) =>
     set((s) => ({ modals: { ...s.modals, [key]: open } })),
@@ -91,29 +160,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
       roomCode: null,
       playerId: null,
       status: 'lobby',
-      players: [],
-      gameState: createInitialGameState(),
-      board: createInitialBoard(),
+      lobbyPlayers: [],
+      snapshot: null,
       settings: defaultSettings,
       hostId: '',
-      selectedDieId: null,
+      selectedDieIds: [],
       selectedRoom: null,
+      pendingConfirm: null,
       modals: { roomActivation: false, crisis: false, gameEnd: false },
+      lastError: null,
     }),
 }))
 
-export function getCurrentPlayer(): Player | undefined {
-  const { players, playerId } = useGameStore.getState()
-  return players.find((p) => p.id === playerId)
+export function getSnapshot(): GameSnapshot | null {
+  return useGameStore.getState().snapshot
 }
 
-export function rollAllDice(): void {
-  const { playerId, players } = useGameStore.getState()
-  if (!playerId) return
-  const updated = players.map((p) =>
-    p.id === playerId
-      ? { ...p, dice: createDice(), submitted: false, rerollsUsed: 0 }
-      : p
-  )
-  useGameStore.setState({ players: updated })
+export function isHost(): boolean {
+  const { playerId, hostId } = useGameStore.getState()
+  return playerId === hostId
 }

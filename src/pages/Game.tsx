@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGameStore } from '../store/gameStore'
-import { useGame } from '../hooks/useGame'
 import { useMultiplayer, useHostActions } from '../hooks/useMultiplayer'
 import { useTimer } from '../hooks/useTimer'
-import { PlaneBoard } from '../components/Board/PlaneBoard'
-import { ActionPanel } from '../components/Actions/ActionPanel'
-import { RoomActivation } from '../components/Modals/RoomActivation'
+import { useBoardControls } from '../hooks/useBoardControls'
+import { useGame } from '../hooks/useGame'
+import { BoardView } from '../components/Board/BoardView'
+import { CityCardPreview } from '../components/Modals/CityCardPreview'
+import { RoleCardPreview } from '../components/Modals/RoleCardPreview'
 import { CrisisModal } from '../components/Modals/CrisisModal'
 import { GameEnd } from '../components/Modals/GameEnd'
 import { GameShell } from '../components/layout/game/GameShell'
@@ -14,10 +15,12 @@ import { MissionHeader } from '../components/layout/game/MissionHeader'
 import { PlayerRail } from '../components/layout/game/PlayerRail'
 import { BoardStage } from '../components/layout/game/BoardStage'
 import { MissionStatusPanel } from '../components/layout/game/MissionStatusPanel'
-import { FlightPathDock } from '../components/layout/game/FlightPathDock'
+import { DiceHandBar } from '../components/game/DiceHandBar'
+import { TimerExpiredOverlay } from '../components/Modals/TimerExpiredOverlay'
 import { startGame, startGameLocal } from '../lib/firebase'
 import { track } from '../lib/analytics'
-import type { RoomId } from '../types/board'
+import { assetManifest } from '../lib/assetManifest'
+import type { PlayerView } from '../lib/engine/selectors'
 import { Play, Copy } from 'lucide-react'
 import { DIFFICULTY_CONFIG } from '../lib/constants'
 
@@ -25,28 +28,22 @@ export function GamePage() {
   const navigate = useNavigate()
   const roomCode = useGameStore((s) => s.roomCode)
   const status = useGameStore((s) => s.status)
-  const players = useGameStore((s) => s.players)
+  const lobbyPlayers = useGameStore((s) => s.lobbyPlayers)
   const playerId = useGameStore((s) => s.playerId)
   const settings = useGameStore((s) => s.settings)
-  const round = useGameStore((s) => s.gameState.round)
-  const selectedDieId = useGameStore((s) => s.selectedDieId)
   const modals = useGameStore((s) => s.modals)
+  const snapshot = useGameStore((s) => s.snapshot)
+  const localMode = useGameStore((s) => s.localMode)
 
-  const {
-    selectDie,
-    selectRoom,
-    selectedRoom,
-    assignDice,
-    activateRoom,
-    deliver,
-    localMode,
-  } = useGame()
+  const controls = useBoardControls()
+  const { playerViews } = useGame()
 
   useMultiplayer()
   useTimer()
   const { isHost } = useHostActions()
 
-  const [activationRoom, setActivationRoom] = useState<RoomId | null>(null)
+  const [previewCityId, setPreviewCityId] = useState<number | null>(null)
+  const [previewPlayer, setPreviewPlayer] = useState<PlayerView | null>(null)
 
   useEffect(() => {
     if (!roomCode) navigate('/play')
@@ -59,21 +56,10 @@ export function GamePage() {
     } else {
       await startGame(roomCode)
     }
-    track('game_started', { difficulty: settings.difficulty, player_count: players.length })
-  }
-
-  const handleRoomClick = (roomId: RoomId) => {
-    if (selectedDieId) {
-      assignDice(selectedDieId, roomId)
-      selectRoom(null)
-    } else {
-      selectRoom(roomId)
-      setActivationRoom(roomId)
-    }
-  }
-
-  const handleDieClick = (dieId: string) => {
-    selectDie(selectedDieId === dieId ? null : dieId)
+    track('game_started', {
+      difficulty: settings.difficulty,
+      player_count: lobbyPlayers.length,
+    })
   }
 
   const copyCode = () => {
@@ -84,61 +70,92 @@ export function GamePage() {
 
   if (status === 'lobby') {
     return (
-      <div className="game-viewport flex flex-col items-center justify-center bg-canvas">
-        <div className="w-[480px] rounded-2xl bg-surface border border-white/10 p-8">
-          <h2 className="font-display font-bold text-2xl text-text mb-2 text-center">
-            Waiting Room
-          </h2>
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <span className="font-mono text-2xl tracking-widest text-primary">
-              {roomCode}
+      <div className="mission-waiting-room">
+        <div className="mission-waiting-room__panel">
+          <p className="mission-waiting-room__eyebrow">Mission Room</p>
+          <h1 className="mission-waiting-room__title">Crew Briefing</h1>
+
+          <div className="mission-waiting-room__launch-strip">
+            <span className="mission-waiting-room__timer-chip">02:00</span>
+            <span className="mission-waiting-room__badge mission-waiting-room__badge--online">
+              {localMode ? 'Local mode' : 'Online'}
             </span>
-            <button type="button" onClick={copyCode} aria-label="Copy room code">
-              <Copy size={16} className="text-muted hover:text-text" />
+          </div>
+
+          <div className="mission-waiting-room__code-row">
+            <span className="mission-waiting-room__code">{roomCode}</span>
+            <button type="button" onClick={copyCode} aria-label="Copy room code" className="mission-waiting-room__copy">
+              <Copy size={16} />
+              Copy Code
             </button>
           </div>
 
-          <p className="text-center text-sm text-muted font-body mb-4">
-            {DIFFICULTY_CONFIG[settings.difficulty].label} ·{' '}
-            {players.length}/{settings.maxPlayers} players
-          </p>
-
-          <div className="space-y-2 mb-6">
-            {players.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between px-3 py-2 rounded-lg bg-canvas"
-              >
-                <span className="font-body text-sm text-text">
-                  {p.name}
-                  {p.isHost && ' (Host)'}
-                </span>
-                <span className="text-xs text-muted capitalize">
-                  {p.role.replace(/([A-Z])/g, ' $1').trim()}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {isHost ? (
-            <button
-              type="button"
-              onClick={handleStart}
-              disabled={players.length < 1}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-body font-medium hover:bg-primary/80 disabled:opacity-50"
-            >
-              <Play size={18} />
-              Start Game
-            </button>
-          ) : (
-            <p className="text-center text-muted font-body text-sm">
-              Waiting for host to start...
+          <section className="mission-waiting-room__section">
+            <h2>Connected crew</h2>
+            <ul className="mission-waiting-room__crew mission-waiting-room__crew--cards">
+              {lobbyPlayers.map((p) => (
+                <li key={p.id} className="mission-waiting-room__crew-row">
+                  <img
+                    src={assetManifest.board.cityCardBack}
+                    alt=""
+                    className="mission-waiting-room__crew-back"
+                    draggable={false}
+                  />
+                  <span>
+                    {p.name}
+                    {p.isHost && (
+                      <span className="mission-waiting-room__badge mission-waiting-room__badge--host">
+                        Host
+                      </span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mission-waiting-room__roles-note">
+              Roles are assigned randomly at launch — no role picker.
             </p>
-          )}
+          </section>
+
+          <section className="mission-waiting-room__section">
+            <h2>Mission settings</h2>
+            <dl className="mission-waiting-room__settings">
+              <div>
+                <dt>Difficulty</dt>
+                <dd>{DIFFICULTY_CONFIG[settings.difficulty].label}</dd>
+              </div>
+              <div>
+                <dt>Crisis</dt>
+                <dd>{settings.crisisEnabled ? 'On' : 'Off'}</dd>
+              </div>
+              <div>
+                <dt>Timer</dt>
+                <dd>2:00 continuous</dd>
+              </div>
+              <div>
+                <dt>Crew size</dt>
+                <dd>{lobbyPlayers.length} / 4</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="mission-waiting-room__actions">
+            {isHost ? (
+              <button type="button" className="mission-waiting-room__start" onClick={handleStart}>
+                <Play size={18} />
+                Start Mission
+              </button>
+            ) : (
+              <p className="mission-waiting-room__wait">Waiting for host to start mission…</p>
+            )}
+          </section>
         </div>
       </div>
     )
   }
+
+  const activeName =
+    snapshot?.players.find((p) => p.id === snapshot.activePlayerId)?.name ?? '—'
 
   return (
     <>
@@ -146,40 +163,67 @@ export function GamePage() {
         header={
           <MissionHeader
             roomCode={roomCode}
-            round={round}
+            activePlayer={activeName}
+            turnStep={snapshot?.turnStep}
             difficulty={settings.difficulty}
+            crisisEnabled={settings.crisisEnabled}
           />
         }
         rail={
           <PlayerRail
-            players={players}
+            players={playerViews}
             playerId={playerId}
-            selectedDieId={selectedDieId}
-            onDieClick={handleDieClick}
+            onRoleClick={setPreviewPlayer}
           />
         }
         board={
-          <BoardStage>
-            <PlaneBoard
-              onRoomClick={handleRoomClick}
-              selectedRoom={selectedRoom}
+          <BoardStage onCityClick={setPreviewCityId}>
+            <BoardView
+              selectedDieIds={controls.selectedDieIds}
+              selectedRoom={controls.selectedRoom}
+              controlsFrozen={controls.controlsFrozen}
+              onRoomClick={controls.handleRoomClick}
+              onDieSlotClick={controls.handleDieSlotClick}
+              onCityClick={setPreviewCityId}
+              onFlyLeft={() => controls.handleFlyClick('left')}
+              onFlyRight={() => controls.handleFlyClick('right')}
             />
-            <ActionPanel />
           </BoardStage>
         }
         status={<MissionStatusPanel />}
-        flight={<FlightPathDock onDeliver={deliver} />}
+        footer={
+          <DiceHandBar
+            selectedDieIds={controls.selectedDieIds}
+            roleName={controls.roleName}
+            playerName={controls.currentPlayer?.name}
+            roleId={controls.currentPlayer?.role}
+            playerId={playerId}
+            controlsFrozen={controls.controlsFrozen}
+            canAct={controls.canAct}
+            turnStep={controls.turnStep}
+            isMyTurn={controls.isMyTurn}
+            rerollsRemaining={controls.rerollsRemaining}
+            pendingConfirm={controls.pendingConfirm}
+            dice={controls.currentPlayer?.dice ?? []}
+            onDieClick={controls.handleDieClick}
+            onRoll={controls.rollDice}
+            onRerollSelected={controls.handleRerollSelected}
+            onEndTurn={controls.endTurn}
+            onCancelSelection={controls.clearSelection}
+            onConfirm={controls.confirmPending}
+            onCancelConfirm={controls.cancelPending}
+            onEngineerFlip={controls.handleEngineerFlip}
+          />
+        }
       />
 
-      {activationRoom && (
-        <RoomActivation
-          roomId={activationRoom}
-          onConfirm={() => {
-            activateRoom(activationRoom)
-            setActivationRoom(null)
-          }}
-          onClose={() => setActivationRoom(null)}
-        />
+      <TimerExpiredOverlay />
+
+      {previewCityId !== null && (
+        <CityCardPreview cityId={previewCityId} onClose={() => setPreviewCityId(null)} />
+      )}
+      {previewPlayer && (
+        <RoleCardPreview player={previewPlayer} onClose={() => setPreviewPlayer(null)} />
       )}
       {modals.crisis && <CrisisModal />}
       {modals.gameEnd && <GameEnd />}

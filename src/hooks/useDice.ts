@@ -1,70 +1,41 @@
 import { useState, useCallback } from 'react'
-import { useGameStore, getCurrentPlayer } from '../store/gameStore'
-import { rerollDie, moveDieTechnician } from '../lib/rules'
-import type { Die } from '../types/game'
+import { useGame } from './useGame'
+import type { EngineDie } from '../types/engine'
 
 export function useDice() {
-  const currentPlayer = getCurrentPlayer()
-  const updateLocalPlayer = useGameStore((s) => s.updateLocalPlayer)
+  const { currentPlayer, rerollDice, rerollsRemaining, turnStep, isMyTurn } =
+    useGame()
   const [rolling, setRolling] = useState(false)
 
   const canReroll =
+    isMyTurn &&
+    turnStep === 'useDice' &&
     currentPlayer &&
-    currentPlayer.rerollsUsed < currentPlayer.rerollsMax
+    rerollsRemaining > 0
 
   const reroll = useCallback(
-    (dieId: string) => {
-      if (!currentPlayer || !canReroll) return
-      const die = currentPlayer.dice.find((d) => d.id === dieId)
-      if (!die || die.locked) return
-
+    async (dieId: string) => {
+      if (!canReroll) return
       setRolling(true)
-      setTimeout(() => {
-        const engineerLower = currentPlayer.role === 'engineer'
-        let newDie = rerollDie(die, engineerLower)
-        if (currentPlayer.role === 'technician') {
-          newDie = moveDieTechnician(newDie)
-        }
-        const updated = {
-          ...currentPlayer,
-          dice: currentPlayer.dice.map((d) => (d.id === dieId ? newDie : d)),
-          rerollsUsed: currentPlayer.rerollsUsed + 1,
-        }
-        updateLocalPlayer(updated)
-        setRolling(false)
-      }, 400)
+      await rerollDice([dieId])
+      setRolling(false)
     },
-    [currentPlayer, canReroll, updateLocalPlayer]
+    [canReroll, rerollDice]
   )
 
-  const rerollAll = useCallback(() => {
-    if (!currentPlayer || !canReroll) return
+  const rerollAll = useCallback(async () => {
+    if (!canReroll || !currentPlayer) return
+    const ids = currentPlayer.dice
+      .filter((d) => d.location === 'hand' && !d.locked)
+      .map((d) => d.id)
+    if (ids.length === 0) return
     setRolling(true)
-    setTimeout(() => {
-      const engineerLower = currentPlayer.role === 'engineer'
-      const updated = {
-        ...currentPlayer,
-        dice: currentPlayer.dice.map((d) => {
-          if (d.locked) return d
-          let newDie = rerollDie(d, engineerLower)
-          if (currentPlayer.role === 'technician') {
-            newDie = moveDieTechnician(newDie)
-          }
-          return newDie
-        }),
-        rerollsUsed: currentPlayer.rerollsUsed + 1,
-      }
-      updateLocalPlayer(updated)
-      setRolling(false)
-    }, 400)
-  }, [currentPlayer, canReroll, updateLocalPlayer])
-
-  const rerollsRemaining = currentPlayer
-    ? currentPlayer.rerollsMax - currentPlayer.rerollsUsed
-    : 0
+    await rerollDice(ids)
+    setRolling(false)
+  }, [canReroll, currentPlayer, rerollDice])
 
   return {
-    dice: currentPlayer?.dice ?? ([] as Die[]),
+    dice: (currentPlayer?.dice ?? []) as EngineDie[],
     rolling,
     canReroll: Boolean(canReroll),
     rerollsRemaining,

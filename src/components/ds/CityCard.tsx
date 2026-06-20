@@ -1,136 +1,62 @@
-import { Check, Syringe, Apple, Zap, Droplets, HeartPulse } from 'lucide-react'
-import type { SupplyType } from '../../types/board'
-import { SUPPLY_LABELS } from '../../lib/constants'
-import { abbreviateCity } from '../../lib/cityLabel'
-
-const REGION_COLORS: Record<string, string> = {
-  blue: 'var(--room-vaccine)',
-  yellow: 'var(--room-food)',
-  red: 'var(--room-firstaid)',
-}
-
-const SUPPLY_ICONS = {
-  vaccine: Syringe,
-  food: Apple,
-  power: Zap,
-  water: Droplets,
-  firstAid: HeartPulse,
-} as const
+import { cityImagePathById, assetManifest } from '../../lib/assetManifest'
 
 interface CityCardProps {
   city: string
-  region?: string
-  supplyNeeded: SupplyType
+  cityId: number
   current?: boolean
   delivered?: boolean
+  faceDown?: boolean
   compact?: boolean
   onClick?: () => void
 }
 
 export function CityCard({
   city,
-  region = 'blue',
-  supplyNeeded,
+  cityId,
   current = false,
   delivered = false,
+  faceDown = false,
   compact = false,
   onClick,
 }: CityCardProps) {
-  const regionColor = REGION_COLORS[region] || 'var(--room-firstaid)'
-  const Icon = SUPPLY_ICONS[supplyNeeded]
-  const supplyColor = `var(--room-${supplyNeeded === 'firstAid' ? 'firstaid' : supplyNeeded})`
+  const artSrc = faceDown
+    ? assetManifest.board.cityCardBack
+    : cityImagePathById(cityId)
+
+  const className = [
+    'city-card-art',
+    compact ? 'city-card-art--compact' : '',
+    onClick && !delivered ? 'city-card-art--interactive' : '',
+    current ? 'city-card-art--current' : '',
+    delivered ? 'city-card-art--delivered' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const img = (
+    <img src={artSrc} alt={city} className="city-card-art__img" draggable={false} />
+  )
 
   if (compact) {
-    const markerClass = [
-      'city-card-compact__marker',
-      current ? 'city-card-compact__marker--current' : '',
-    ]
-      .filter(Boolean)
-      .join(' ')
-
     return (
       <button
         type="button"
         onClick={onClick}
         disabled={delivered}
         title={city}
-        aria-label={`${city}, needs ${SUPPLY_LABELS[supplyNeeded]}${delivered ? ', delivered' : ''}`}
-        className={[
-          'city-card-compact',
-          delivered ? 'city-card-compact--delivered' : '',
-          onClick && !delivered ? 'city-card-compact--clickable' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
+        aria-label={`${city}${delivered ? ', delivered' : ''}`}
+        className={className}
+        style={{ width: '100%' }}
+        data-city-id={cityId}
       >
-        <div
-          className={markerClass}
-          style={{
-            background: delivered ? 'var(--highlight)' : supplyColor,
-          }}
-        />
-        <span className="city-card-compact__label">{abbreviateCity(city)}</span>
+        {img}
       </button>
     )
   }
 
   return (
-    <div
-      style={{
-        width: 150,
-        background: 'var(--bg-panel)',
-        borderRadius: 'var(--radius-md)',
-        border: current ? '2px solid var(--active)' : '1px solid var(--line)',
-        boxShadow: current ? 'var(--glow-active)' : 'var(--shadow-panel)',
-        borderTop: `4px solid ${regionColor}`,
-        overflow: 'hidden',
-        opacity: delivered ? 0.5 : 1,
-        position: 'relative',
-      }}
-    >
-      <div style={{ padding: '10px 12px' }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: 16,
-            color: 'var(--text)',
-            lineHeight: 1.1,
-          }}
-        >
-          {city}
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 6, padding: '0 12px 12px' }}>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 5,
-            background: supplyColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-on-color)',
-          }}
-        >
-          <Icon size={16} strokeWidth={2} />
-        </div>
-      </div>
-      {delivered && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(20,24,31,0.55)',
-          }}
-        >
-          <Check size={36} color="var(--highlight)" strokeWidth={2} />
-        </div>
-      )}
+    <div className={className} style={{ width: '4.5rem' }} data-city-id={cityId}>
+      {img}
     </div>
   )
 }

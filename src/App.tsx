@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Spinner } from './components/layout/Spinner'
+import { AssetGate } from './components/AssetGate'
 
 const LandingPage = lazy(() =>
   import('./pages/LandingPage').then((m) => ({ default: m.LandingPage }))
@@ -22,6 +23,9 @@ const RulesPage = lazy(() =>
 )
 const RolesPage = lazy(() =>
   import('./pages/Roles').then((m) => ({ default: m.RolesPage }))
+)
+const CardsPage = lazy(() =>
+  import('./pages/Cards').then((m) => ({ default: m.CardsPage }))
 )
 const FaqPage = lazy(() =>
   import('./pages/Faq').then((m) => ({ default: m.FaqPage }))
@@ -48,11 +52,19 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/play" element={<LobbyPage />} />
-          <Route path="/game" element={<GamePage />} />
+          <Route
+            path="/game"
+            element={
+              <AssetGate>
+                <GamePage />
+              </AssetGate>
+            }
+          />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/how-to-play" element={<HowToPlayPage />} />
           <Route path="/rules" element={<RulesPage />} />
           <Route path="/roles" element={<RolesPage />} />
+          <Route path="/cards" element={<CardsPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />

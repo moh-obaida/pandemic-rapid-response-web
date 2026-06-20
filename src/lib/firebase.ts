@@ -10,15 +10,11 @@ import {
   type Database,
 } from 'firebase/database'
 import { getAuth, signInAnonymously, type Auth } from 'firebase/auth'
-import type { FirebaseRoom } from '../types/firebase'
-import type { Player, GameState, GameSettings } from '../types/game'
-import type { BoardState } from '../types/board'
-import {
-  generateRoomCode,
-  TIMER_SECONDS,
-} from './constants'
-import { createInitialGameState, createInitialBoard, createDice, getRoleRerollMax } from './rules'
-import type { RoleId } from '../types/board'
+import type { FirebaseRoom, LobbyPlayer } from '../types/firebase'
+import type { GameSettings } from '../types/game'
+import type { GameSnapshot, GameAction } from '../types/engine'
+import { generateRoomCode } from './constants'
+import { setupGame } from './engine'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -64,10 +60,18 @@ function roomRef(code: string) {
   return ref(database, `rooms/${code}`)
 }
 
+function defaultSettings(settings: Partial<GameSettings>): GameSettings {
+  return {
+    difficulty: settings.difficulty ?? 'normal',
+    aiReplacement: settings.aiReplacement ?? false,
+    maxPlayers: settings.maxPlayers ?? 4,
+    crisisEnabled: settings.crisisEnabled ?? false,
+  }
+}
+
 export async function createRoom(
   hostName: string,
-  settings: GameSettings,
-  role: RoleId
+  settings: GameSettings
 ): Promise<{ code: string; playerId: string }> {
   const playerId = await ensureAuth()
   let code = generateRoomCode()
@@ -83,29 +87,22 @@ export async function createRoom(
     }
   }
 
-  const player: Player = {
+  const player: LobbyPlayer = {
     id: playerId,
     name: hostName,
-    role,
-    dice: [],
-    rerollsUsed: 0,
-    rerollsMax: getRoleRerollMax(role),
-    suppliesCarried: 0,
-    missedTurns: 0,
     isHost: true,
     isReady: true,
     isConnected: true,
-    submitted: false,
   }
 
   const room: FirebaseRoom = {
     code,
     status: 'lobby',
-    players: { [playerId]: player },
-    gameState: createInitialGameState(),
-    board: createInitialBoard(),
-    settings,
+    lobbyPlayers: { [playerId]: player },
+    snapshot: null,
+    settings: defaultSettings(settings),
     hostId: playerId,
+    pendingAction: null,
     createdAt: Date.now(),
     lastUpdated: Date.now(),
   }
@@ -116,8 +113,7 @@ export async function createRoom(
 
 export async function joinRoom(
   code: string,
-  playerName: string,
-  role: RoleId
+  playerName: string
 ): Promise<string> {
   const playerId = await ensureAuth()
   const snap = await get(roomRef(code))
@@ -125,27 +121,20 @@ export async function joinRoom(
 
   const room = snap.val() as FirebaseRoom
   if (room.status !== 'lobby') throw new Error('Game already started')
-  if (Object.keys(room.players).length >= room.settings.maxPlayers) {
+  if (Object.keys(room.lobbyPlayers).length >= room.settings.maxPlayers) {
     throw new Error('Room is full')
   }
 
-  const player: Player = {
+  const player: LobbyPlayer = {
     id: playerId,
     name: playerName,
-    role,
-    dice: [],
-    rerollsUsed: 0,
-    rerollsMax: getRoleRerollMax(role),
-    suppliesCarried: 0,
-    missedTurns: 0,
     isHost: false,
     isReady: false,
     isConnected: true,
-    submitted: false,
   }
 
   await update(roomRef(code), {
-    [`players/${playerId}`]: player,
+    [`lobbyPlayers/${playerId}`]: player,
     lastUpdated: Date.now(),
   })
 
@@ -163,37 +152,40 @@ export function subscribeToRoom(
   return () => off(r)
 }
 
-export async function updatePlayer(
+export async function syncSnapshot(
   code: string,
-  playerId: string,
-  data: Partial<Player>
+  snapshot: GameSnapshot
 ): Promise<void> {
   await update(roomRef(code), {
-    [`players/${playerId}`]: data,
+    snapshot,
     lastUpdated: Date.now(),
   })
 }
 
-export async function syncGameState(
+export async function submitPendingAction(
   code: string,
-  gameState: Partial<GameState>
+  playerId: string,
+  action: GameAction
 ): Promise<void> {
-  const updates: Record<string, unknown> = { lastUpdated: Date.now() }
-  for (const [key, val] of Object.entries(gameState)) {
-    updates[`gameState/${key}`] = val
-  }
-  await update(roomRef(code), updates)
+  const id = crypto.randomUUID()
+  await update(roomRef(code), {
+    pendingAction: { id, playerId, action, at: Date.now() },
+    lastUpdated: Date.now(),
+  })
 }
 
-export async function syncBoard(
+export async function clearPendingAction(
   code: string,
-  board: Partial<BoardState>
+  localMode = false
 ): Promise<void> {
-  const updates: Record<string, unknown> = { lastUpdated: Date.now() }
-  for (const [key, val] of Object.entries(board)) {
-    updates[`board/${key}`] = val
+  if (localMode) {
+    await syncFullRoomLocal(code, { pendingAction: null })
+    return
   }
-  await update(roomRef(code), updates)
+  await update(roomRef(code), {
+    pendingAction: null,
+    lastUpdated: Date.now(),
+  })
 }
 
 export async function syncFullRoom(
@@ -208,33 +200,22 @@ export async function startGame(code: string): Promise<void> {
   if (!snap.exists()) return
   const room = snap.val() as FirebaseRoom
 
-  const players: Record<string, Player> = {}
-  for (const [id, p] of Object.entries(room.players)) {
-    players[id] = {
-      ...p,
-      dice: createDice(),
-      submitted: false,
-      rerollsUsed: 0,
-    }
-  }
+  const players = Object.values(room.lobbyPlayers).map((p) => ({
+    id: p.id,
+    name: p.name,
+    isHost: p.isHost,
+  }))
+
+  const snapshot = setupGame({
+    difficulty: room.settings.difficulty,
+    maxPlayers: room.settings.maxPlayers,
+    crisisEnabled: room.settings.crisisEnabled,
+    players,
+  })
 
   await update(roomRef(code), {
     status: 'playing',
-    players,
-    'gameState/phase': 'assigning',
-    'gameState/timer': TIMER_SECONDS,
-    'gameState/timerRunning': true,
-    lastUpdated: Date.now(),
-  })
-}
-
-export async function submitRoomAssignment(
-  code: string,
-  playerId: string,
-  player: Player
-): Promise<void> {
-  await update(roomRef(code), {
-    [`players/${playerId}`]: { ...player, submitted: true },
+    snapshot,
     lastUpdated: Date.now(),
   })
 }
@@ -243,18 +224,18 @@ export async function leaveRoom(code: string, playerId: string): Promise<void> {
   const snap = await get(roomRef(code))
   if (!snap.exists()) return
   const room = snap.val() as FirebaseRoom
-  const { [playerId]: _, ...remaining } = room.players
+  const remaining = { ...room.lobbyPlayers }
+  delete remaining[playerId]
   if (Object.keys(remaining).length === 0) {
     await set(roomRef(code), null)
   } else {
     await update(roomRef(code), {
-      [`players/${playerId}`]: null,
+      [`lobbyPlayers/${playerId}`]: null,
       lastUpdated: Date.now(),
     })
   }
 }
 
-// Local-only mock for development without Firebase
 const localRooms = new Map<string, FirebaseRoom>()
 const localListeners = new Map<string, Set<(room: FirebaseRoom | null) => void>>()
 
@@ -265,35 +246,27 @@ function notifyLocal(code: string) {
 
 export async function createRoomLocal(
   hostName: string,
-  settings: GameSettings,
-  role: RoleId
+  settings: GameSettings
 ): Promise<{ code: string; playerId: string }> {
   const playerId = crypto.randomUUID()
   const code = generateRoomCode()
 
-  const player: Player = {
+  const player: LobbyPlayer = {
     id: playerId,
     name: hostName,
-    role,
-    dice: [],
-    rerollsUsed: 0,
-    rerollsMax: getRoleRerollMax(role),
-    suppliesCarried: 0,
-    missedTurns: 0,
     isHost: true,
     isReady: true,
     isConnected: true,
-    submitted: false,
   }
 
   const room: FirebaseRoom = {
     code,
     status: 'lobby',
-    players: { [playerId]: player },
-    gameState: createInitialGameState(),
-    board: createInitialBoard(),
-    settings,
+    lobbyPlayers: { [playerId]: player },
+    snapshot: null,
+    settings: defaultSettings(settings),
     hostId: playerId,
+    pendingAction: null,
     createdAt: Date.now(),
     lastUpdated: Date.now(),
   }
@@ -305,30 +278,22 @@ export async function createRoomLocal(
 
 export async function joinRoomLocal(
   code: string,
-  playerName: string,
-  role: RoleId
+  playerName: string
 ): Promise<string> {
   const room = localRooms.get(code)
   if (!room) throw new Error('Room not found')
   if (room.status !== 'lobby') throw new Error('Game already started')
 
   const playerId = crypto.randomUUID()
-  const player: Player = {
+  const player: LobbyPlayer = {
     id: playerId,
     name: playerName,
-    role,
-    dice: [],
-    rerollsUsed: 0,
-    rerollsMax: getRoleRerollMax(role),
-    suppliesCarried: 0,
-    missedTurns: 0,
     isHost: false,
     isReady: false,
     isConnected: true,
-    submitted: false,
   }
 
-  room.players[playerId] = player
+  room.lobbyPlayers[playerId] = player
   room.lastUpdated = Date.now()
   notifyLocal(code)
   return playerId
@@ -357,15 +322,27 @@ export async function syncFullRoomLocal(
 export async function startGameLocal(code: string): Promise<void> {
   const room = localRooms.get(code)
   if (!room) return
-  for (const p of Object.values(room.players)) {
-    p.dice = createDice()
-    p.submitted = false
-    p.rerollsUsed = 0
-  }
+
+  const players = Object.values(room.lobbyPlayers).map((p) => ({
+    id: p.id,
+    name: p.name,
+    isHost: p.isHost,
+  }))
+
+  room.snapshot = setupGame({
+    difficulty: room.settings.difficulty,
+    maxPlayers: room.settings.maxPlayers,
+    crisisEnabled: room.settings.crisisEnabled,
+    players,
+  })
   room.status = 'playing'
-  room.gameState.phase = 'assigning'
-  room.gameState.timer = TIMER_SECONDS
-  room.gameState.timerRunning = true
   room.lastUpdated = Date.now()
   notifyLocal(code)
+}
+
+export async function syncSnapshotLocal(
+  code: string,
+  snapshot: GameSnapshot
+): Promise<void> {
+  await syncFullRoomLocal(code, { snapshot })
 }

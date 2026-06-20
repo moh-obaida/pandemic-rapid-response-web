@@ -1,24 +1,21 @@
-import type { Player } from '../../types/game'
+import type { PlayerView } from '../../lib/engine/selectors'
 
 interface PlayerStatusProps {
-  player: Player
-  isCurrentTurn?: boolean
+  player: PlayerView
 }
 
-export function PlayerStatus({ player, isCurrentTurn }: PlayerStatusProps) {
-  const assigned = player.dice.filter((d) => d.assignedRoom).length
-  const total = player.dice.length
+export function PlayerStatus({ player }: PlayerStatusProps) {
+  const handCount = player.dice.filter((d) => d.location === 'hand').length
+  const assigned = player.dice.filter((d) => d.location === 'room').length
 
   return (
     <div className="flex items-center gap-2 text-xs font-body">
-      {isCurrentTurn && (
-        <span className="w-2 h-2 rounded-full bg-success animate-pulse" aria-label="Your turn" />
+      {player.isActive && (
+        <span className="w-2 h-2 rounded-full bg-success animate-pulse" aria-label="Active turn" />
       )}
-      {player.submitted && (
-        <span className="text-success font-medium">Submitted</span>
-      )}
+      <span className="text-muted capitalize">{player.position}</span>
       <span className="text-muted">
-        Dice: {assigned}/{total}
+        Dice: {assigned}/{handCount + assigned}
       </span>
       <span className="text-muted">
         Rerolls: {player.rerollsMax - player.rerollsUsed}

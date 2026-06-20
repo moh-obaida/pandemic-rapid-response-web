@@ -7,6 +7,7 @@ interface PanelProps {
   stripe?: 'left' | 'top'
   padding?: number
   style?: CSSProperties
+  className?: string
 }
 
 export function Panel({
@@ -16,6 +17,7 @@ export function Panel({
   stripe = 'left',
   padding = 16,
   style,
+  className,
 }: PanelProps) {
   const stripeStyle = accent
     ? stripe === 'top'
@@ -25,13 +27,15 @@ export function Panel({
 
   return (
     <div
+      className={className}
       style={{
-        background: 'var(--bg-panel)',
-        border: '2px solid var(--line)',
-        borderRadius: '12px',
-        boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+        background: 'var(--bg-glass)',
+        border: '1px solid var(--line)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-panel)',
         overflow: 'hidden',
-        transition: 'all 200ms ease',
+        transition: 'border-color var(--dur-med)',
+        backdropFilter: 'blur(12px)',
         ...stripeStyle,
         ...style,
       }}

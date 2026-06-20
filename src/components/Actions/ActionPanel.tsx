@@ -3,8 +3,9 @@ import { Panel } from '../ds/Panel'
 import { useGame } from '../../hooks/useGame'
 import { useDice } from '../../hooks/useDice'
 import { RoomSelector } from './RoomSelector'
-import { Dices, Send, Package } from 'lucide-react'
+import { Dices, SkipForward, Package, Navigation } from 'lucide-react'
 import type { RoomId } from '../../types/board'
+import { canDeliverAtPlane } from '../../lib/engine/selectors'
 
 export function ActionPanel() {
   const {
@@ -13,47 +14,84 @@ export function ActionPanel() {
     selectedRoom,
     selectDie,
     selectRoom,
-    assignDice,
-    submitAssignments,
-    loadCargo,
-    gameState,
-    startNextRound,
+    assignDieToFirstSlot,
+    activateRoom,
+    endTurn,
+    rollDice,
+    turnStep,
+    isMyTurn,
+    snapshot,
+    lastError,
+    clearError,
+    moveToRoom,
+    flyPlane,
   } = useGame()
 
   const { rerollsRemaining, canReroll, rerollAll, rolling } = useDice()
-  const phase = gameState.phase
 
   const handleRoomSelect = (roomId: RoomId) => {
-    selectRoom(roomId)
-    if (selectedDieId) {
-      assignDice(selectedDieId, roomId)
+    if (selectedDieId && currentPlayer?.position === roomId) {
+      assignDieToFirstSlot(selectedDieId, roomId)
       selectRoom(null)
+    } else if (isMyTurn && turnStep === 'useDice' && currentPlayer) {
+      const hand = currentPlayer.dice.filter((d) => d.location === 'hand' && !d.locked)
+      if (hand.length > 0) {
+        moveToRoom([hand[0].id], roomId)
+      } else {
+        selectRoom(roomId)
+      }
+    } else {
+      selectRoom(roomId)
     }
   }
 
-  const handleLoadCargo = () => {
-    const ids = gameState.supplies.filter((s) => !s.inCargo).map((s) => s.id)
-    loadCargo(ids)
-  }
+  if (!currentPlayer || !snapshot) return null
 
-  if (!currentPlayer) return null
+  const canActivateCargo =
+    currentPlayer.position === 'cargo' &&
+    snapshot.planePosition !== undefined &&
+    canDeliverAtPlane(snapshot)
 
   return (
-    <Panel label="Command Center" padding={12} style={{ minWidth: 300 }} accent="var(--accent)">
-      {phase === 'assigning' && (
+    <Panel label="Action Dock" padding={12} style={{ minWidth: 280 }} accent="var(--medical-blue)">
+      {lastError && (
+        <p style={{ color: 'var(--error)', fontSize: 12, marginBottom: 8 }}>
+          {lastError}
+          <button type="button" onClick={clearError} className="ml-2 underline">
+            dismiss
+          </button>
+        </p>
+      )}
+
+      {!isMyTurn && turnStep !== 'pausedByTimer' && (
+        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 12 }}>
+          Waiting for{' '}
+          {snapshot.players.find((p) => p.id === snapshot.activePlayerId)?.name ?? 'next player'}
+          …
+        </p>
+      )}
+
+      {isMyTurn && turnStep === 'pausedByTimer' && (
+        <p style={{ fontSize: 13, color: 'var(--warning)', marginBottom: 12, fontWeight: 600 }}>
+          Timer event — mission clock resetting…
+        </p>
+      )}
+
+      {isMyTurn && turnStep === 'roll' && (
         <>
-          <p
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 13,
-              color: 'var(--accent)',
-              marginBottom: 12,
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Your Turn — Coordinate Resources
+          <p style={{ fontSize: 13, color: 'var(--accent)', marginBottom: 12, fontWeight: 600 }}>
+            Roll your dice to begin
+          </p>
+          <Button full onClick={rollDice} icon={<Dices size={14} />}>
+            Roll Dice
+          </Button>
+        </>
+      )}
+
+      {isMyTurn && turnStep === 'useDice' && (
+        <>
+          <p style={{ fontSize: 13, color: 'var(--accent)', marginBottom: 12, fontWeight: 600 }}>
+            Move, assign dice, activate rooms
           </p>
           <RoomSelector
             selectedDieId={selectedDieId}
@@ -71,38 +109,62 @@ export function ActionPanel() {
               Reroll ({rerollsRemaining})
             </Button>
             <Button variant="ghost" size="sm" onClick={() => selectDie(null)}>
-              Clear Selection
+              Clear
             </Button>
+            {currentPlayer.dice.some((d) => d.face === 'plane' && d.location === 'hand') && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<Navigation size={14} />}
+                  onClick={() => {
+                    const id = currentPlayer.dice.find(
+                      (d) => d.face === 'plane' && d.location === 'hand'
+                    )?.id
+                    if (id) flyPlane([id], 'right')
+                  }}
+                >
+                  Fly →
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<Navigation size={14} />}
+                  onClick={() => {
+                    const id = currentPlayer.dice.find(
+                      (d) => d.face === 'plane' && d.location === 'hand'
+                    )?.id
+                    if (id) flyPlane([id], 'left')
+                  }}
+                >
+                  ← Fly
+                </Button>
+              </>
+            )}
           </div>
-          <div style={{ marginTop: 12 }}>
-            <Button
-              full
-              onClick={submitAssignments}
-              disabled={currentPlayer.submitted}
-              variant={currentPlayer.submitted ? 'success' : 'primary'}
-              icon={<Send size={14} />}
-            >
-              {currentPlayer.submitted ? 'Submitted' : 'Submit'}
+          {currentPlayer.position && (
+            <div style={{ marginTop: 12 }}>
+              <Button
+                full
+                variant="secondary"
+                icon={<Package size={14} />}
+                onClick={() => activateRoom(currentPlayer.position)}
+                disabled={currentPlayer.position === 'cargo' && !canActivateCargo}
+              >
+                Activate {currentPlayer.position}
+              </Button>
+            </div>
+          )}
+          <div style={{ marginTop: 8 }}>
+            <Button full variant="ghost" onClick={endTurn} icon={<SkipForward size={14} />}>
+              End Turn
             </Button>
           </div>
         </>
       )}
 
-      {phase === 'delivering' && (
-        <>
-          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 12 }}>
-            Load cargo, then tap cities on the flightpath to Deliver
-          </p>
-          <Button full icon={<Package size={14} />} onClick={handleLoadCargo}>
-            Load Cargo
-          </Button>
-        </>
-      )}
-
-      {phase === 'resolution' && (
-        <Button full onClick={startNextRound}>
-          Next Round
-        </Button>
+      {!isMyTurn && turnStep === 'pausedByTimer' && (
+        <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>Timer event in progress…</p>
       )}
     </Panel>
   )

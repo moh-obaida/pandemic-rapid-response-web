@@ -1,44 +1,81 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { useGameStore } from '../store/gameStore'
-import { syncGameState, syncFullRoomLocal } from '../lib/firebase'
-import { TIMER_SECONDS } from '../lib/constants'
-import { checkLoseCondition } from '../lib/rules'
+import { useGameStore, isHost } from '../store/gameStore'
+import {
+  syncSnapshot,
+  syncSnapshotLocal,
+} from '../lib/firebase'
+
+const TIMER_EVENT_PAUSE_MS = 450
 
 export function useTimer() {
-  const timer = useGameStore((s) => s.gameState.timer)
-  const timerRunning = useGameStore((s) => s.gameState.timerRunning)
-  const roomCode = useGameStore((s) => s.roomCode)
-  const localMode = useGameStore((s) => s.localMode)
+  const timerRunning = useGameStore((s) => s.snapshot?.timerRunning ?? false)
   const status = useGameStore((s) => s.status)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const isHost = useGameStore((s) => s.playerId === s.hostId)
+  const resolvingRef = useRef(false)
+  const host = isHost()
 
-  const tick = useCallback(() => {
+  const syncSnapshotNow = useCallback(async (snap: NonNullable<ReturnType<typeof useGameStore.getState>['snapshot']>) => {
     const state = useGameStore.getState()
-    if (!state.gameState.timerRunning || state.gameState.timer <= 0) return
+    if (!state.roomCode) return
+    if (state.localMode) {
+      await syncSnapshotLocal(state.roomCode, snap)
+    } else {
+      await syncSnapshot(state.roomCode, snap)
+    }
+  }, [])
 
-    const newTimer = state.gameState.timer - 1
-    const gs = { ...state.gameState, timer: newTimer }
+  const runTimerEvent = useCallback(async () => {
+    if (resolvingRef.current) return
+    resolvingRef.current = true
+    try {
+      const state = useGameStore.getState()
+      if (!host && !state.localMode) return
+
+      let snap = state.dispatch({ type: 'BEGIN_TIMER_EVENT' })
+      if (snap) {
+        await syncSnapshotNow(snap)
+        await new Promise((r) => setTimeout(r, TIMER_EVENT_PAUSE_MS))
+      }
+
+      snap = useGameStore.getState().dispatch({ type: 'RESOLVE_TIMER_EVENT' })
+      if (snap) {
+        await syncSnapshotNow(snap)
+        if (snap.result) {
+          useGameStore.setState({
+            status: 'ended',
+            modals: { ...useGameStore.getState().modals, gameEnd: true },
+          })
+        }
+      }
+    } finally {
+      resolvingRef.current = false
+    }
+  }, [host, syncSnapshotNow])
+
+  const tick = useCallback(async () => {
+    const state = useGameStore.getState()
+    const snap = state.snapshot
+    if (!snap?.timerRunning || state.status !== 'playing') return
+    if (!host && !state.localMode) return
+
+    if (snap.timer <= 0) {
+      await runTimerEvent()
+      return
+    }
+
+    const newTimer = snap.timer - 1
+    const updated = { ...snap, timer: newTimer }
+    useGameStore.setState({ snapshot: updated })
 
     if (newTimer <= 0) {
-      gs.timerRunning = false
-      if (checkLoseCondition(gs)) {
-        gs.result = 'lose'
-        useGameStore.setState({ status: 'ended', gameState: gs })
-        useGameStore.getState().setModal('gameEnd', true)
-      }
+      await runTimerEvent()
+      return
     }
 
-    useGameStore.setState({ gameState: gs })
-
-    if (roomCode && isHost) {
-      if (localMode) {
-        syncFullRoomLocal(roomCode, { gameState: gs })
-      } else {
-        syncGameState(roomCode, { timer: newTimer, timerRunning: gs.timerRunning, result: gs.result })
-      }
+    if (state.roomCode) {
+      await syncSnapshotNow(updated)
     }
-  }, [roomCode, isHost, localMode])
+  }, [host, runTimerEvent, syncSnapshotNow])
 
   useEffect(() => {
     if (status !== 'playing' || !timerRunning) {
@@ -55,23 +92,12 @@ export function useTimer() {
     }
   }, [status, timerRunning, tick])
 
-  const startTimer = useCallback(() => {
-    const gs = useGameStore.getState().gameState
-    useGameStore.setState({
-      gameState: { ...gs, timer: TIMER_SECONDS, timerRunning: true },
-    })
-  }, [])
-
-  const stopTimer = useCallback(() => {
-    const gs = useGameStore.getState().gameState
-    useGameStore.setState({
-      gameState: { ...gs, timerRunning: false },
-    })
-  }, [])
-
+  const timer = useGameStore((s) => s.snapshot?.timer ?? 0)
+  const turnStep = useGameStore((s) => s.snapshot?.turnStep)
   const timerColor =
     timer <= 30 ? 'danger' : timer <= 60 ? 'warning' : 'success'
-  const isFlashing = timer <= 5 && timerRunning
+  const isFlashing =
+    (timer <= 5 && timerRunning) || turnStep === 'pausedByTimer'
 
-  return { timer, timerRunning, timerColor, isFlashing, startTimer, stopTimer }
+  return { timer, timerRunning, timerColor, isFlashing, turnStep }
 }

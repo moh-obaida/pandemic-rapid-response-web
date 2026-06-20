@@ -1,90 +1,88 @@
 /* ============================================================
-   COLORS — Pandemic Rapid Response (Medical Premium Board Game)
-   Aesthetic: Deep navy/charcoal, medical red, white accents, gold highlights
-   Style: Clean, professional, elegant but urgent
+   COLORS — Emergency aircraft mission control
    ============================================================ */
 :root {
-  /* ---------- PREMIUM DARK UI NEUTRALS (medical board game) ---------- */
-  --bg-950: #0F1419;  /* deepest charcoal / scrim */
-  --bg-900: #151A20;
-  --bg-app: #1A1F2A;  /* APP CANVAS — deep navy */
-  --bg-800: #232A37;
-  --bg-panel: #2A3340; /* player areas, cards, status bar — premium dark */
-  --bg-700: #313A47;
-  --bg-raised: #3A4455; /* raised tiles, cards — elegant elevation */
-  --bg-hover: #4A5568;  /* hover fill */
+  --bg-950: #040a12;
+  --bg-900: #07111f;
+  --bg-app: #07111f;
+  --bg-800: #101c2e;
+  --bg-panel: #101c2e;
+  --bg-700: #1e334d;
+  --bg-raised: #1e334d;
+  --bg-hover: #243b57;
+  --bg-glass: rgba(16, 28, 46, 0.72);
 
-  --line: #4A5568;        /* borders — subtle elegant */
-  --line-soft: #3A4455;   /* subtle dividers */
-  --line-strong: #5A6B82; /* emphasized edges */
+  --line: rgba(56, 189, 248, 0.12);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(56, 189, 248, 0.28);
 
-  --text: #FFFFFF;        /* primary text — clean white */
-  --text-dim: #C5D0DF;    /* secondary — soft white */
-  --text-faint: #9DAAB8;  /* tertiary / placeholder */
-  --text-disabled: #6B7A8A;
-  --text-on-color: #FFFFFF; /* white text on colors */
+  --text: #f8fafc;
+  --text-dim: #94a3b8;
+  --text-faint: #64748b;
+  --text-disabled: #475569;
+  --text-on-color: #f8fafc;
 
-  /* ---------- 8 ROOM COLORS (premium medical palette) ---------- */
-  --room-vaccine:   #3B82F6;  /* medical blue */
-  --room-food:      #10B981;  /* clinical green */
-  --room-power:     #D4AF37;  /* gold — premium highlight */
-  --room-firstaid:  #DC2626;  /* urgent medical red */
-  --room-water:     #0EA5E9;  /* clean cyan */
-  --room-recycling: #059669;  /* deep forest green */
-  --room-cargo:     #F97316;  /* professional orange */
-  --room-hq:        #A1A5AA;  /* sophisticated gray */
-  --room-hq-true:   #8B8E93;  /* spec value */
+  --card-paper: #f8fafc;
 
-  /* ---------- SUPPLY TYPES (inherit room colors) ---------- */
-  --supply-vaccine:  var(--room-vaccine);
-  --supply-food:     var(--room-food);
-  --supply-power:    var(--room-power);
+  /* Room / supply (board-accurate) */
+  --room-vaccine: #38bdf8;
+  --room-food: #22c55e;
+  --room-power: #f4c542;
+  --room-firstaid: #e54b4b;
+  --room-water: #0ea5e9;
+  --room-recycling: #16a34a;
+  --room-cargo: #f97316;
+  --room-hq: #94a3b8;
+  --room-hq-true: #64748b;
+
+  --supply-vaccine: var(--room-vaccine);
+  --supply-food: var(--room-food);
+  --supply-power: var(--room-power);
   --supply-firstaid: var(--room-firstaid);
-  --supply-water:    var(--room-water);
+  --supply-water: var(--room-water);
 
-  /* ---------- GAME STATE ACCENTS (premium medical) ---------- */
-  --active:    #D4AF37;  /* active player / current turn highlight (gold) */
-  --highlight: #10B981;  /* valid target / selectable (medical green) */
-  --error:     #DC2626;  /* invalid / lose / error (medical red) */
-  --plane:     #8B5CF6;  /* plane pawn (elegant purple) */
-  --plane-soft:#4C1D95;
+  --active: #38bdf8;
+  --highlight: #22c55e;
+  --error: #e54b4b;
+  --plane: #38bdf8;
+  --plane-soft: #0c4a6e;
 
-  /* ---------- TIMER ZONES (urgent gradient) ---------- */
-  --timer-safe: #10B981;  /* 0–60s remaining — calm green */
-  --timer-warn: #F59E0B;  /* 60–30s — warning amber */
-  --timer-crit: #DC2626;  /* 30–0s — critical red */
+  --timer-safe: #22c55e;
+  --timer-warn: #f4c542;
+  --timer-crit: #e54b4b;
 
-  /* ---------- WASTE TRACK (gray → amber → red) ---------- */
-  --waste-low:  #6B7A8A;
-  --waste-mid:  #F97316;
-  --waste-high: #F59E0B;
-  --waste-end:  #DC2626;
+  --waste-low: #64748b;
+  --waste-mid: #f97316;
+  --waste-high: #f4c542;
+  --waste-end: #e54b4b;
 
-  /* ====================================================
-     SEMANTIC ALIASES — reference these in components
-     ==================================================== */
-  --surface-app:    var(--bg-app);
-  --surface-panel:  var(--bg-panel);
+  --surface-app: var(--bg-app);
+  --surface-panel: var(--bg-panel);
   --surface-raised: var(--bg-raised);
-  --surface-well:   var(--bg-900);
+  --surface-well: var(--bg-900);
 
   --border-default: var(--line);
-  --border-subtle:  var(--line-soft);
-  --border-strong:  var(--line-strong);
+  --border-subtle: var(--line-soft);
+  --border-strong: var(--line-strong);
 
   --text-strong: var(--text);
-  --text-body:   var(--text-dim);
-  --text-muted:  var(--text-faint);
+  --text-body: var(--text-dim);
+  --text-muted: var(--text-faint);
 
-  /* brand accent = medical red of urgency */
-  --accent:      #DC2626;
-  --accent-deep: #7F1D1D;
-  --accent-soft: #4C1D1D;
+  --accent: #e54b4b;
+  --accent-deep: #b91c1c;
+  --accent-soft: rgba(229, 75, 75, 0.15);
 
-  --focus-ring: #D4AF37;
+  --medical-blue: #38bdf8;
+  --supply-green: #22c55e;
+  --warning-yellow: #f4c542;
 
-  /* status semantics */
-  --status-ok:    var(--highlight);
-  --status-warn:  var(--timer-warn);
-  --status-crit:  var(--error);
+  --focus-ring: #38bdf8;
+  --status-ok: var(--highlight);
+  --status-warn: var(--warning-yellow);
+  --status-crit: var(--error);
+
+  --glow-active: 0 0 0 1px rgba(56, 189, 248, 0.5), 0 0 20px rgba(56, 189, 248, 0.25);
+  --glow-valid: 0 0 0 1px rgba(34, 197, 94, 0.45), 0 0 16px rgba(34, 197, 94, 0.2);
+  --glow-error: 0 0 0 1px rgba(229, 75, 75, 0.5), 0 0 16px rgba(229, 75, 75, 0.25);
 }

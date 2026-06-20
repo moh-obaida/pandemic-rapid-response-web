@@ -1,14 +1,22 @@
 import { useGameStore } from '../store/gameStore'
 import { useNavigate } from 'react-router-dom'
+import { getPlayerViews, TOKEN_DISPLAY } from '../lib/engine/selectors'
 import { BarChart3, ArrowLeft } from 'lucide-react'
 
 export function StatsPage() {
   const navigate = useNavigate()
-  const gameState = useGameStore((s) => s.gameState)
-  const board = useGameStore((s) => s.board)
-  const players = useGameStore((s) => s.players)
+  const snapshot = useGameStore((s) => s.snapshot)
 
-  const delivered = board.cities.filter((c) => c.delivered).length
+  if (!snapshot) {
+    return (
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-8">
+        <p className="text-muted font-body">No active game session</p>
+      </div>
+    )
+  }
+
+  const players = getPlayerViews(snapshot)
+  const delivered = snapshot.cities.filter((c) => c.status === 'delivered').length
 
   return (
     <div className="min-h-screen bg-canvas flex items-center justify-center p-8">
@@ -21,12 +29,12 @@ export function StatsPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <StatCard label="Round" value={String(gameState.round)} />
-          <StatCard label="Waste" value={`${gameState.waste}/${gameState.wasteMax}`} />
+          <StatCard label="Waste" value={`${snapshot.waste}/${TOKEN_DISPLAY.wasteMax}`} />
           <StatCard label="Cities Delivered" value={`${delivered}/24`} />
+          <StatCard label="HQ Tokens" value={`${snapshot.hqTokens}/${TOKEN_DISPLAY.hqMax}`} />
           <StatCard
-            label="Time Tokens"
-            value={`${gameState.timeTokens}/${gameState.timeTokensMax}`}
+            label="Supply Tokens"
+            value={`${snapshot.supplyTokens}/${TOKEN_DISPLAY.supplyMax}`}
           />
         </div>
 

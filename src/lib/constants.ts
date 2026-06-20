@@ -1,23 +1,12 @@
-import type { Role, Room, City, CrisisCard, SupplyType } from '../types/board'
-import type { Difficulty } from '../types/game'
+/**
+ * Backward-compatible barrel. Authoritative data lives in `./constants/`.
+ */
+export * from './constants/index'
+
+import type { City, CrisisCard, Room, SupplyType } from '../types/board'
 import { theme } from '../styles/theme'
-
-export const TIMER_SECONDS = 120
-export const DICE_PER_PLAYER = 6
-export const BASE_REROLLS = 2
-export const TIME_TOKENS_START = 9
-export const WASTE_MAX = 12
-export const MAX_PLAYERS = 4
-export const MIN_PLAYERS = 2
-export const AFK_KICK_THRESHOLD = 3
-
-export const SUPPLY_TYPES: SupplyType[] = [
-  'vaccine',
-  'food',
-  'power',
-  'water',
-  'firstAid',
-]
+import { CITIES } from './constants/cities'
+import { HQ_TOKENS_START, SUPPLY_TOKENS_START } from './constants/tokens'
 
 export const SUPPLY_LABELS: Record<SupplyType, string> = {
   vaccine: 'Vaccine',
@@ -41,58 +30,6 @@ export const REGION_TO_SUPPLY: Record<string, SupplyType> = {
   red: 'power',
 }
 
-export const ROLES: Role[] = [
-  {
-    id: 'analyst',
-    name: 'Analyst',
-    description: 'Data-driven strategist',
-    ability: '+1 reroll power (3 total rerolls)',
-    rerollBonus: 1,
-  },
-  {
-    id: 'technician',
-    name: 'Technician',
-    description: 'Precision operator',
-    ability: '+1 die movement (move result +1)',
-    rerollBonus: 0,
-  },
-  {
-    id: 'engineer',
-    name: 'Engineer',
-    description: 'Systems modifier',
-    ability: 'Can modify dice results (reroll shows lower value)',
-    rerollBonus: 0,
-  },
-  {
-    id: 'flightPlanner',
-    name: 'Flight Planner',
-    description: 'Route optimizer',
-    ability: '+1 fly operation (deliver to 2 cities per token)',
-    rerollBonus: 0,
-  },
-  {
-    id: 'director',
-    name: 'Director',
-    description: 'Command authority',
-    ability: 'HQ die acts as wildcard for any color',
-    rerollBonus: 0,
-  },
-  {
-    id: 'recycler',
-    name: 'Recycler',
-    description: 'Waste reducer',
-    ability: '-1 waste die (one unmatched die ignored)',
-    rerollBonus: 0,
-  },
-  {
-    id: 'supplySpecialist',
-    name: 'Supply Specialist',
-    description: 'Logistics expert',
-    ability: 'Out-of-order supply assignment',
-    rerollBonus: 0,
-  },
-]
-
 export const ROOMS: Room[] = [
   { id: 'hq', name: 'HQ', color: theme.colors.rooms.hq, supplyType: null, icon: 'building-2' },
   { id: 'vaccine', name: 'Vaccine', color: theme.colors.rooms.vaccine, supplyType: 'vaccine', icon: 'syringe' },
@@ -104,35 +41,27 @@ export const ROOMS: Room[] = [
   { id: 'cargo', name: 'Cargo', color: theme.colors.rooms.cargo, supplyType: null, icon: 'package' },
 ]
 
-const CITY_NAMES = [
-  'Atlanta', 'Boston', 'Chicago', 'Dallas', 'Denver', 'Detroit',
-  'Houston', 'Las Vegas', 'Los Angeles', 'Miami', 'Minneapolis', 'Nashville',
-  'New Orleans', 'New York', 'Orlando', 'Philadelphia', 'Phoenix', 'Portland',
-  'San Diego', 'San Francisco', 'Seattle', 'St. Louis', 'Tampa', 'Washington',
-]
+/** @deprecated Use HQ_TOKENS_START + SUPPLY_TOKENS_START from `./constants/tokens`. */
+export const TIME_TOKENS_START = HQ_TOKENS_START + SUPPLY_TOKENS_START
 
-const REGIONS: Array<'blue' | 'yellow' | 'red'> = ['blue', 'yellow', 'red']
-const REGION_SUPPLIES: Record<'blue' | 'yellow' | 'red', SupplyType[]> = {
-  blue: ['vaccine', 'water', 'firstAid'],
-  yellow: ['food', 'power', 'water'],
-  red: ['power', 'firstAid', 'food'],
-}
-
+/**
+ * @deprecated Use `CITIES` from `./constants/cities` for authoritative multi-crate requirements.
+ */
 export function createCities(): City[] {
-  return CITY_NAMES.map((name, i) => {
-    const region = REGIONS[i % 3]
-    const supplies = REGION_SUPPLIES[region]
+  return CITIES.map((city) => {
+    const supplyTypes = Object.keys(city.crates) as SupplyType[]
     return {
-      id: i,
-      name,
-      region,
-      supplyNeeded: supplies[i % supplies.length],
+      id: city.cityId,
+      name: city.name,
+      region: 'blue',
+      supplyNeeded: supplyTypes[0],
       delivered: false,
-      distance: Math.floor(i / 3) + 1,
+      distance: Math.floor(city.cityId / 3) + 1,
     }
   })
 }
 
+/** @deprecated Use `buildCrisisDeck()` from `./constants/crises`. */
 export const CRISIS_CARDS: CrisisCard[] = [
   { id: 'c1', name: 'Supply Shortage', description: 'Waste increases by 2', effectType: 'waste', value: 2, immediate: true },
   { id: 'c2', name: 'Equipment Failure', description: 'Waste increases by 1', effectType: 'waste', value: 1, immediate: true },
@@ -150,31 +79,3 @@ export const CRISIS_CARDS: CrisisCard[] = [
   { id: 'c14', name: 'Emergency Redirect', description: 'Delivery requirement changes', effectType: 'delivery', value: 1, immediate: true },
   { id: 'c15', name: 'System Overload', description: 'Lose 2 time tokens', effectType: 'timeToken', value: 2, immediate: true },
 ]
-
-export const DIFFICULTY_CONFIG: Record<
-  Difficulty,
-  { citiesVisible: number; cityDeckSize: number; label: string }
-> = {
-  easy: { citiesVisible: 2, cityDeckSize: 3, label: 'Easy' },
-  normal: { citiesVisible: 2, cityDeckSize: 5, label: 'Normal' },
-  veteran: { citiesVisible: 3, cityDeckSize: 7, label: 'Veteran' },
-  heroic: { citiesVisible: 4, cityDeckSize: 9, label: 'Heroic' },
-}
-
-export function shuffle<T>(arr: T[]): T[] {
-  const copy = [...arr]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
-
-export function generateRoomCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return code
-}

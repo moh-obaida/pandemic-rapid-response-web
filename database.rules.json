@@ -3,8 +3,8 @@
     "rooms": {
       "$roomCode": {
         ".read": "auth != null",
-        ".write": "auth != null && (!data.exists() || data.child('status').val() === 'lobby' || data.child('status').val() === 'playing')",
-        ".validate": "newData.hasChildren(['status', 'players', 'gameState', 'settings', 'hostId']) && newData.child('status').isString() && newData.child('players').hasChildren()"
+        ".write": "auth != null && (!data.exists() || data.child('status').val() === 'lobby' || auth.uid === data.child('hostId').val() || newData.hasChild('pendingAction'))",
+        ".validate": "newData.hasChildren(['status', 'lobbyPlayers', 'settings', 'hostId']) && newData.child('status').isString()"
       },
       ".indexOn": ["status", "createdAt"]
     },

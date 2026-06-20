@@ -1,28 +1,42 @@
-import { AlertTriangle } from 'lucide-react'
 import { useGameStore } from '../../store/gameStore'
+import { CRISIS_DEFINITIONS } from '../../lib/constants/crises'
+import { crisisImagePath } from '../../lib/assetManifest'
 
 export function CrisisDisplay() {
-  const crisis = useGameStore((s) => s.board.currentCrisis)
+  const crises = useGameStore((s) => s.snapshot?.activeTemporaryCrises ?? [])
+  const turbulence = useGameStore((s) => s.snapshot?.turbulenceActive)
+  const winds = useGameStore((s) => s.snapshot?.extremeWindsActive)
+  const crisisEnabled = useGameStore((s) => s.settings.crisisEnabled)
 
-  if (!crisis) {
-    return (
-      <span className="text-xs text-muted font-body">Clear</span>
-    )
+  if (!crisisEnabled) {
+    return <span className="crisis-instrument--clear">Crisis mode off</span>
   }
+
+  if (crises.length === 0 && !turbulence && !winds) {
+    return <span className="crisis-instrument--clear">Clear skies</span>
+  }
+
+  const active = crises[0]
+  const def = active
+    ? CRISIS_DEFINITIONS.find((d) => d.id === active.instance.definitionId)
+    : turbulence
+      ? CRISIS_DEFINITIONS.find((d) => d.id === 'turbulence')
+      : CRISIS_DEFINITIONS.find((d) => d.id === 'extreme-winds')
+
+  const crisisId = active?.instance.definitionId ?? (turbulence ? 'turbulence' : 'extreme-winds')
+  const imgSrc = crisisImagePath(crisisId)
 
   return (
     <button
       type="button"
       onClick={() => useGameStore.getState().setModal('crisis', true)}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-danger/20 border border-danger/50 hover:bg-danger/30 transition-colors"
-      aria-label={`Active crisis: ${crisis.name}`}
+      className="crisis-instrument"
+      aria-label={`Active crisis: ${def?.name ?? crisisId}`}
     >
-      <AlertTriangle size={16} className="text-danger" />
-      <div className="text-left">
-        <div className="text-xs text-danger font-display font-bold uppercase">
-          Crisis
-        </div>
-        <div className="text-sm text-text font-body">{crisis.name}</div>
+      <img src={imgSrc} alt="" className="crisis-instrument__img" draggable={false} />
+      <div className="min-w-0 text-left">
+        <div className="crisis-instrument__label">Active crisis</div>
+        <div className="crisis-instrument__name">{def?.name ?? crisisId}</div>
       </div>
     </button>
   )

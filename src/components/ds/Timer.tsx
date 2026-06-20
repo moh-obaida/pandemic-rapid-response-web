@@ -3,6 +3,7 @@ interface TimerProps {
   total?: number
   size?: 'sm' | 'md' | 'lg'
   label?: string
+  flashing?: boolean
 }
 
 export function Timer({
@@ -10,13 +11,14 @@ export function Timer({
   total = 120,
   size = 'lg',
   label = 'Round Timer',
+  flashing = false,
 }: TimerProps) {
   const mm = Math.floor(Math.max(0, seconds) / 60)
   const ss = String(Math.max(0, seconds) % 60).padStart(2, '0')
   let zone = 'var(--timer-safe)'
   if (seconds <= 60) zone = 'var(--timer-warn)'
   if (seconds <= 30) zone = 'var(--timer-crit)'
-  const pulsing = seconds <= 5 && seconds > 0
+  const pulsing = flashing || (seconds <= 5 && seconds > 0)
   const FS = { sm: 28, md: 44, lg: 64 }[size]
   const pct = Math.max(0, Math.min(1, seconds / total))
 

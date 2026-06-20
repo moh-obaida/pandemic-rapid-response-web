@@ -1,13 +1,14 @@
 import { Flightpath } from '../../Board/Flightpath'
 
 interface FlightPathDockProps {
-  onDeliver: (cityId: number) => void
+  onCityClick?: (cityId: number) => void
 }
 
-export function FlightPathDock({ onDeliver }: FlightPathDockProps) {
+export function FlightPathDock({ onCityClick }: FlightPathDockProps) {
   return (
     <div className="flightpath-dock">
-      <Flightpath onDeliver={onDeliver} />
+      <span className="flightpath-dock__label">Flight Path</span>
+      <Flightpath onCityClick={onCityClick} />
     </div>
   )
 }

@@ -51,6 +51,7 @@ export interface GameSettings {
   difficulty: Difficulty
   aiReplacement: boolean
   maxPlayers: number
+  crisisEnabled: boolean
 }
 
 export interface RoomSession {
