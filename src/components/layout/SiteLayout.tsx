@@ -7,9 +7,9 @@ interface SiteLayoutProps {
 
 export function SiteLayout({ children }: SiteLayoutProps) {
   return (
-    <div className="site-page" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="site-page">
       <WebsiteHeader />
-      <main style={{ flex: 1, position: 'relative', zIndex: 1 }}>{children}</main>
+      <main className="site-page__main">{children}</main>
       <Footer />
     </div>
   )

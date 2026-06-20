@@ -1,5 +1,5 @@
 export type SupplyType = 'vaccine' | 'food' | 'power' | 'water' | 'firstAid'
-export type RegionColor = 'blue' | 'yellow' | 'red'
+
 export type RoomId =
   | 'hq'
   | 'vaccine'
@@ -19,8 +19,6 @@ export type RoleId =
   | 'recycler'
   | 'supplySpecialist'
 
-export type CrisisEffectType = 'waste' | 'dice' | 'timeToken' | 'delivery'
-
 export interface Role {
   id: RoleId
   name: string
@@ -35,30 +33,4 @@ export interface Room {
   color: string
   supplyType: SupplyType | null
   icon: string
-}
-
-export interface City {
-  id: number
-  name: string
-  region: RegionColor
-  supplyNeeded: SupplyType
-  delivered: boolean
-  distance: number
-}
-
-export interface CrisisCard {
-  id: string
-  name: string
-  description: string
-  effectType: CrisisEffectType
-  value: number
-  immediate: boolean
-}
-
-export interface BoardState {
-  planePosition: number
-  cities: City[]
-  currentCrisis: CrisisCard | null
-  crisisDeck: CrisisCard[]
-  cityDeckSize: number
 }

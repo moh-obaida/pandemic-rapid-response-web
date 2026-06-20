@@ -9,7 +9,7 @@ import {
   syncFullRoomLocal,
   clearPendingAction,
 } from '../lib/firebase'
-import { applyAction, autoResolveWasteRoll } from '../lib/engine'
+import { applyAction } from '../lib/engine'
 import { isRuleError } from '../types/engine'
 import type { FirebaseRoom } from '../types/firebase'
 
@@ -21,14 +21,10 @@ async function processPendingAction(
   const pending = room.pendingAction
   if (!pending || !room.snapshot) return
 
-  let result = applyAction(room.snapshot, pending.action)
+  const result = applyAction(room.snapshot, pending.action)
   if (isRuleError(result)) {
     await clearPendingAction(roomCode, localMode)
     return
-  }
-
-  if (result.pendingWasteRoll) {
-    result = autoResolveWasteRoll(result)
   }
 
   const updates: Partial<FirebaseRoom> = {

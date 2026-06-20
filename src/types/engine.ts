@@ -56,6 +56,8 @@ export interface PendingWasteRoll {
   roomId: RoomId
   dieIds: string[]
   recyclerPlayerId?: string
+  /** Die excluded from waste count when Recycler chooses one. */
+  excludedDieId?: string
 }
 
 export interface GameSnapshot {
@@ -88,8 +90,19 @@ export interface GameSnapshot {
 export type GameAction =
   | { type: 'ROLL_DICE'; playerId: string }
   | { type: 'ASSIGN_DIE'; playerId: string; dieId: string; roomId: RoomId; slotIndex: number }
+  | {
+      type: 'ASSIGN_DICE_GROUP'
+      playerId: string
+      roomId: RoomId
+      dieIds: string[]
+      startSlot: number
+    }
   | { type: 'ACTIVATE_ROOM'; playerId: string; roomId: RoomId }
-  | { type: 'RESOLVE_WASTE_ROLL'; dieRolls: Record<string, DieFace> }
+  | {
+      type: 'RESOLVE_WASTE_ROLL'
+      dieRolls: Record<string, DieFace>
+      excludedDieId?: string
+    }
   | { type: 'SPEND_MOVE'; playerId: string; dieIds: string[]; targetRoomId: RoomId }
   | { type: 'SPEND_FLY'; playerId: string; dieIds: string[]; direction: 'left' | 'right' }
   | { type: 'ENGINEER_FLIP'; playerId: string; dieId: string; targetFace: DieFace }

@@ -67,8 +67,9 @@ export function BoardView({
 
   if (!snapshot) {
     return (
-      <div className="board-view board-view--loading">
-        <span className="text-muted text-sm">Loading board…</span>
+      <div className="board-view board-view--loading" aria-busy="true" aria-label="Loading board">
+        <div className="board-view__loader" aria-hidden />
+        <span className="board-view__loading-label">Loading mission table…</span>
       </div>
     )
   }

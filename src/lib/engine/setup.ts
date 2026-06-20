@@ -11,7 +11,6 @@ import type { Difficulty } from '../../types/game'
 import type {
   GameSnapshot,
   EngineCrate,
-  EngineDie,
   EnginePlayer,
   EngineCityState,
   EngineSettings,
@@ -141,21 +140,34 @@ export function setupGame(input: SetupInput): GameSnapshot {
 }
 
 export function rollDiceForPlayer(
-  _state: GameSnapshot,
+  state: GameSnapshot,
   playerId: string,
   rng: () => number = Math.random
-): EngineDie[] {
-  const newDice: EngineDie[] = []
-  for (let i = 0; i < DICE_PER_PLAYER; i++) {
-    newDice.push({
-      id: nextDieId(),
-      face: rollDieFace(rng),
-      ownerId: playerId,
-      location: 'hand',
-      locked: false,
-    })
+): void {
+  const owned = state.dice.filter((d) => d.ownerId === playerId)
+
+  if (owned.length === 0) {
+    for (let i = 0; i < DICE_PER_PLAYER; i++) {
+      state.dice.push({
+        id: nextDieId(),
+        face: rollDieFace(rng),
+        ownerId: playerId,
+        location: 'hand',
+        locked: false,
+      })
+    }
+    return
   }
-  return newDice
+
+  for (const die of owned) {
+    if (die.location === 'spent' || die.location === 'hand') {
+      die.face = rollDieFace(rng)
+      die.location = 'hand'
+      die.locked = false
+      die.roomId = undefined
+      die.slotIndex = undefined
+    }
+  }
 }
 
 export function getRerollsMax(role: RoleId): number {

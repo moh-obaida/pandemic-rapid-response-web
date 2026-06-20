@@ -1,7 +1,8 @@
 import { SiteLayout } from '../components/layout/SiteLayout'
 import { SeoHead } from '../components/layout/SeoHead'
 import { PageHeader } from '../components/layout/PageHeader'
-import { RoleCard } from '../components/ds/RoleCard'
+import { MissionCtaBand } from '../components/layout/MissionCtaBand'
+import { RoleDeckShowcase } from '../components/landing/RoleDeckShowcase'
 import { ROLES } from '../lib/constants'
 
 const TIPS: Record<string, string> = {
@@ -17,27 +18,28 @@ const TIPS: Record<string, string> = {
 export function RolesPage() {
   return (
     <SiteLayout>
-      <SeoHead title="Roles" description="All 7 PRR specialist roles with abilities and strategy tips." path="/roles" />
-      <PageHeader title="Roles" subtitle="7 unique specialists aboard the response plane" />
-      <div
-        style={{
-          maxWidth: 720,
-          margin: '0 auto',
-          padding: '0 var(--gutter) 48px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
-        {ROLES.map((r) => (
-          <div key={r.id}>
-            <RoleCard role={r.name} roleId={r.id} ability={r.ability} />
-            <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '8px 0 0 4px' }}>
-              Tip: {TIPS[r.id]}
-            </p>
-          </div>
-        ))}
+      <SeoHead
+        title="Crew Roles"
+        description="All 7 PRR specialist roles with abilities and strategy tips."
+        path="/roles"
+      />
+      <PageHeader
+        eyebrow="Crew manifest"
+        title="Crew Roles"
+        subtitle="7 unique specialists aboard the response plane — assigned randomly at launch"
+      />
+      <div className="mission-prose mission-prose--wide">
+        <RoleDeckShowcase />
+        <div className="mission-role-tips">
+          {ROLES.map((r) => (
+            <article key={r.id} className="mission-role-tip glass-panel">
+              <h3 className="mission-role-tip__name">{r.name}</h3>
+              <p className="mission-role-tip__text">Tip: {TIPS[r.id]}</p>
+            </article>
+          ))}
+        </div>
       </div>
+      <MissionCtaBand />
     </SiteLayout>
   )
 }

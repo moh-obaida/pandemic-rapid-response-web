@@ -24,7 +24,7 @@ export function useBoardControls() {
     currentPlayer,
     isMyTurn,
     turnStep,
-    assignDie,
+    assignDiceGroup,
     moveToRoom,
     flyPlane,
     activateRoom,
@@ -33,6 +33,7 @@ export function useBoardControls() {
     endTurn,
     rerollDice,
     rerollsRemaining,
+    selectableDice,
   } = useGame()
 
   const selectedDieIds = useGameStore((s) => s.selectedDieIds)
@@ -44,7 +45,11 @@ export function useBoardControls() {
   const selectRoom = useGameStore((s) => s.selectRoom)
 
   const controlsFrozen = !isMyTurn || turnStep === 'pausedByTimer'
-  const canAct = isMyTurn && turnStep === 'useDice' && !pendingConfirm
+  const canAct =
+    isMyTurn &&
+    turnStep === 'useDice' &&
+    !pendingConfirm &&
+    !snapshot?.pendingWasteRoll
 
   useEffect(() => {
     if (turnStep === 'pausedByTimer') {
@@ -64,24 +69,9 @@ export function useBoardControls() {
 
   const assignDiceToGroup = useCallback(
     async (dieIds: string[], roomId: RoomId, startSlot: number) => {
-      const snap = useGameStore.getState().snapshot
-      if (!snap || !playerId) return
-
-      if (dieIds.length === 1) {
-        await assignDie(dieIds[0], roomId, startSlot)
-        return
-      }
-
-      const config = snap.roomSlots[roomId]
-      if (!config) return
-
-      let slot = startSlot
-      for (const dieId of dieIds) {
-        await assignDie(dieId, roomId, slot)
-        slot++
-      }
+      await assignDiceGroup(dieIds, roomId, startSlot)
     },
-    [assignDie, playerId]
+    [assignDiceGroup]
   )
 
   const confirmPending = useCallback(async () => {
@@ -261,6 +251,7 @@ export function useBoardControls() {
     currentPlayer,
     roleName,
     rerollsRemaining,
+    selectableDice,
     handleDieClick,
     handleRoomClick,
     handleDieSlotClick,

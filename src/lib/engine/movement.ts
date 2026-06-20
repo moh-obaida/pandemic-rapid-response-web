@@ -2,6 +2,7 @@ import { ROOM_ORDER } from '../constants/rooms'
 import { CITY_COUNT } from '../constants/cities'
 import type { GameSnapshot } from '../../types/engine'
 import type { RoomId } from '../../types/board'
+import { dieAvailableToPlayer } from './rooms'
 
 function getPlayer(state: GameSnapshot, playerId: string) {
   return state.players.find((p) => p.id === playerId)
@@ -11,15 +12,24 @@ function getDie(state: GameSnapshot, dieId: string) {
   return state.dice.find((d) => d.id === dieId)
 }
 
-function pathDistance(from: number, to: number): number {
-  const diff = Math.abs(from - to)
-  return Math.min(diff, CITY_COUNT - diff)
+function getDirectorId(state: GameSnapshot): string | undefined {
+  return state.players.find((p) => p.role === 'director')?.id
 }
 
-export function findPathRooms(
-  from: RoomId,
-  to: RoomId
-): RoomId[] | null {
+function spendMovementDie(state: GameSnapshot, die: NonNullable<ReturnType<typeof getDie>>): void {
+  if (die.location === 'hq') {
+    const hqSlots = state.roomSlots.hq ?? []
+    if (die.slotIndex !== undefined) hqSlots[die.slotIndex] = null
+    const directorId = getDirectorId(state)
+    if (directorId) die.ownerId = directorId
+  }
+  die.location = 'spent'
+  die.locked = true
+  die.roomId = undefined
+  die.slotIndex = undefined
+}
+
+export function findPathRooms(from: RoomId, to: RoomId): RoomId[] | null {
   if (from === to) return []
   const fromIdx = ROOM_ORDER.indexOf(from)
   const toIdx = ROOM_ORDER.indexOf(to)
@@ -53,7 +63,7 @@ export function canMove(
 
   const available = dieIds.every((id) => {
     const d = getDie(state, id)
-    return d && d.ownerId === playerId && d.location === 'hand' && !d.locked
+    return d && dieAvailableToPlayer(state, playerId, d)
   })
   if (!available) return 'Invalid dice'
 
@@ -85,8 +95,7 @@ export function applyMove(
     const step = Math.min(roomsPerDie, steps)
     steps -= step
     const die = getDie(state, dieIds[diceUsed])!
-    die.location = 'spent'
-    die.locked = true
+    spendMovementDie(state, die)
     diceUsed++
   }
   player.position = targetRoomId
@@ -109,8 +118,8 @@ export function canFly(
 
   for (const id of dieIds) {
     const d = getDie(state, id)
-    if (!d || d.ownerId !== playerId || d.location !== 'hand' || d.face !== 'plane')
-      return 'Need plane dice in hand'
+    if (!d || !dieAvailableToPlayer(state, playerId, d) || d.face !== 'plane')
+      return 'Need plane dice in hand or HQ'
   }
 
   return null
@@ -127,11 +136,13 @@ export function applyFly(
   const total = dieIds.length * citiesPerDie
   for (const id of dieIds) {
     const die = getDie(state, id)!
-    die.location = 'spent'
-    die.locked = true
+    spendMovementDie(state, die)
   }
   const delta = direction === 'right' ? total : -total
   state.planePosition = ((state.planePosition + delta) % CITY_COUNT + CITY_COUNT) % CITY_COUNT
 }
 
-export { pathDistance }
+export function pathDistance(from: number, to: number): number {
+  const diff = Math.abs(from - to)
+  return Math.min(diff, CITY_COUNT - diff)
+}

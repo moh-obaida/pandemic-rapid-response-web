@@ -1,11 +1,12 @@
 import { SiteLayout } from '../components/layout/SiteLayout'
 import { SeoHead } from '../components/layout/SeoHead'
 import { PageHeader } from '../components/layout/PageHeader'
+import { MissionCtaBand } from '../components/layout/MissionCtaBand'
 
 const FAQ = [
   {
     q: 'How do I create or join a room?',
-    a: 'Click Play Now, enter your name, pick a role, and Create Room. Share the 6-character code with teammates so they can Join Room.',
+    a: 'Click Start Mission, enter your name, and Create Room. Share the room code with teammates so they can Join Room.',
   },
   {
     q: 'Which difficulty should we pick?',
@@ -13,7 +14,7 @@ const FAQ = [
   },
   {
     q: 'What happens if I disconnect?',
-    a: 'Reconnect with the same browser session if possible. After 3 missed turns you may be removed from the game. AFK handling is host-configurable in a future update.',
+    a: 'Reconnect with the same browser session if possible. After 3 missed turns you may be removed from the game.',
   },
   {
     q: 'Why does the game say "Local mode"?',
@@ -28,27 +29,29 @@ const FAQ = [
 export function FaqPage() {
   return (
     <SiteLayout>
-      <SeoHead title="FAQ" description="Frequently asked questions about PRR Online multiplayer, difficulty, and troubleshooting." path="/faq" />
-      <PageHeader title="FAQ" />
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 var(--gutter) 48px' }}>
+      <SeoHead
+        title="FAQ"
+        description="Frequently asked questions about PRR Online multiplayer, difficulty, and troubleshooting."
+        path="/faq"
+      />
+      <PageHeader
+        eyebrow="Support desk"
+        title="FAQ"
+        subtitle="Multiplayer setup, difficulty, and troubleshooting"
+      />
+      <div className="mission-faq">
         {FAQ.map((item) => (
-          <details
-            key={item.q}
-            style={{
-              marginBottom: 12,
-              background: 'var(--bg-panel)',
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--radius-md)',
-              padding: '12px 16px',
-            }}
-          >
-            <summary style={{ fontFamily: 'var(--font-display)', fontWeight: 700, cursor: 'pointer', color: 'var(--text)' }}>
-              {item.q}
-            </summary>
-            <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '12px 0 0', lineHeight: 1.5 }}>{item.a}</p>
+          <details key={item.q} className="mission-faq__item glass-panel">
+            <summary className="mission-faq__question">{item.q}</summary>
+            <p className="mission-faq__answer">{item.a}</p>
           </details>
         ))}
       </div>
+      <MissionCtaBand
+        title="Still ready to fly?"
+        secondaryLabel="Mission Guide"
+        secondaryTo="/how-to-play"
+      />
     </SiteLayout>
   )
 }

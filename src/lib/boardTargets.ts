@@ -1,6 +1,6 @@
 import { ROOM_ORDER, ROOM_GROUPS } from './constants/rooms'
 import { canMove, canFly } from './engine/movement'
-import { canAssignDie, countCompletedGroups } from './engine/rooms'
+import { canAssignDie, canAssignDiceGroup, countCompletedGroups } from './engine/rooms'
 import { canDeliverAtPlane } from './engine/selectors'
 import type { RoomId } from '../types/board'
 import type { GameSnapshot } from '../types/engine'
@@ -76,7 +76,9 @@ export function getValidAssignSlots(
       if (size === dieIds.length) {
         const group = slots.slice(offset, offset + size)
         if (group.every((s) => s === null)) {
-          if (canAssignDie(snapshot, playerId, dieIds[0], roomId, offset) === null) {
+          if (
+            canAssignDiceGroup(snapshot, playerId, roomId, dieIds, offset) === null
+          ) {
             targets.push({ roomId, slotIndex: offset })
           }
         }
@@ -119,7 +121,7 @@ export function canRoomActivate(
     return hasPlane
   }
 
-  return countCompletedGroups(roomId, slots) > 0
+  return countCompletedGroups(snapshot, roomId, playerId) > 0
 }
 
 export function isDeliveryReady(

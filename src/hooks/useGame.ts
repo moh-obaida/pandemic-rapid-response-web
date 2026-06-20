@@ -3,6 +3,7 @@ import { useGameStore, isHost } from '../store/gameStore'
 import {
   getCurrentPlayerView,
   getPlayerViews,
+  getSelectableDice,
 } from '../lib/engine/selectors'
 import { getRerollsRemaining } from '../lib/engine/getLegalActions'
 import { getRerollsMax } from '../lib/engine/setup'
@@ -82,6 +83,32 @@ export function useGame() {
     [playerId, dispatchAndSync, store]
   )
 
+  const assignDiceGroup = useCallback(
+    async (dieIds: string[], roomId: RoomId, startSlot: number) => {
+      if (!playerId) return
+      if (dieIds.length === 1) {
+        await assignDie(dieIds[0], roomId, startSlot)
+        return
+      }
+      await dispatchAndSync({
+        type: 'ASSIGN_DICE_GROUP',
+        playerId,
+        roomId,
+        dieIds,
+        startSlot,
+      })
+      store.clearSelection()
+    },
+    [playerId, dispatchAndSync, store, assignDie]
+  )
+
+  const resolveWasteRollAction = useCallback(
+    async (dieRolls: Record<string, import('../lib/constants/dice').DieFace>, excludedDieId?: string) => {
+      await dispatchAndSync({ type: 'RESOLVE_WASTE_ROLL', dieRolls, excludedDieId })
+    },
+    [dispatchAndSync]
+  )
+
   const assignDieToFirstSlot = useCallback(
     async (dieId: string, roomId: RoomId) => {
       const snap = useGameStore.getState().snapshot
@@ -149,6 +176,8 @@ export function useGame() {
     ? getRerollsRemaining(snapshot, playerId)
     : 0
   const rerollsMax = currentPlayer ? getRerollsMax(currentPlayer.role) : 0
+  const selectableDice =
+    snapshot && playerId ? getSelectableDice(snapshot, playerId) : []
 
   return {
     ...store,
@@ -156,8 +185,11 @@ export function useGame() {
     snapshot,
     currentPlayer,
     playerViews,
+    selectableDice,
     rollDice,
     assignDie,
+    assignDiceGroup,
+    resolveWasteRoll: resolveWasteRollAction,
     assignDieToFirstSlot,
     activateRoom: activateRoomAction,
     endTurn,

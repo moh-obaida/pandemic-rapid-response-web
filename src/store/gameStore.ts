@@ -5,7 +5,7 @@ import type { GameSettings, GameStatus } from '../types/game'
 import type { RoomId } from '../types/board'
 import type { ModalState } from '../types/ui'
 import type { LobbyPlayer } from '../types/firebase'
-import { applyAction, autoResolveWasteRoll, isRuleError } from '../lib/engine'
+import { applyAction, isRuleError } from '../lib/engine'
 import { friendlyError } from '../lib/userErrors'
 
 interface GameStore {
@@ -98,14 +98,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { snapshot } = get()
     if (!snapshot) return null
 
-    let result = applyAction(snapshot, action)
+    const result = applyAction(snapshot, action)
     if (isRuleError(result)) {
       set({ lastError: friendlyError(result.error) })
       return null
-    }
-
-    if (result.pendingWasteRoll) {
-      result = autoResolveWasteRoll(result)
     }
 
     if (result.result) {

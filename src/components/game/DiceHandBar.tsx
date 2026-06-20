@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { DicePool } from '../Players/DicePool'
 import { ActionHints } from './ActionHints'
 import { ConfirmBar } from './ConfirmBar'
@@ -53,7 +53,22 @@ export function DiceHandBar({
   onEngineerFlip,
 }: DiceHandBarProps) {
   const snapshot = useGameStore((s) => s.snapshot)
-  const [rolling] = useState(false)
+  const [rolling, setRolling] = useState(false)
+
+  const triggerRollAnimation = useCallback(() => {
+    setRolling(true)
+    window.setTimeout(() => setRolling(false), 520)
+  }, [])
+
+  const handleRoll = useCallback(() => {
+    triggerRollAnimation()
+    onRoll()
+  }, [onRoll, triggerRollAnimation])
+
+  const handleRerollSelected = useCallback(() => {
+    triggerRollAnimation()
+    onRerollSelected()
+  }, [onRerollSelected, triggerRollAnimation])
 
   const showEngineerFlip =
     isMyTurn &&
@@ -111,8 +126,8 @@ export function DiceHandBar({
             turnStep={turnStep}
             isMyTurn={isMyTurn}
             rerollsRemaining={rerollsRemaining}
-            onRoll={onRoll}
-            onRerollSelected={onRerollSelected}
+            onRoll={handleRoll}
+            onRerollSelected={handleRerollSelected}
             onEndTurn={onEndTurn}
             onCancelSelection={onCancelSelection}
             rolling={rolling}

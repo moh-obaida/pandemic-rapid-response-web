@@ -1,7 +1,8 @@
 import { useGameStore } from '../../store/gameStore'
 import { CRISIS_DEFINITIONS } from '../../lib/constants/crises'
 import { crisisImagePath } from '../../lib/assetManifest'
-import { X } from 'lucide-react'
+import { Button } from '../ds/Button'
+import { AlertTriangle, X } from 'lucide-react'
 
 export function CrisisModal() {
   const crises = useGameStore((s) => s.snapshot?.activeTemporaryCrises ?? [])
@@ -14,52 +15,41 @@ export function CrisisModal() {
   const def = CRISIS_DEFINITIONS.find((d) => d.id === active.instance.definitionId)
   const imgSrc = crisisImagePath(active.instance.definitionId)
 
+  const close = () => setModal('crisis', false)
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-      <div
-        className="w-full max-w-md rounded-xl bg-surface border-2 border-danger/50 p-6 shadow-2xl animate-fade-in"
-        role="alertdialog"
-        aria-label={`Crisis: ${def?.name ?? active.instance.definitionId}`}
-      >
-        <div className="flex items-start gap-4 mb-4">
+    <div
+      className="game-end-backdrop crisis-backdrop"
+      role="alertdialog"
+      aria-label={`Crisis: ${def?.name ?? active.instance.definitionId}`}
+    >
+      <div className="crisis-panel">
+        <div className="crisis-panel__header">
+          <div className="crisis-panel__title-row">
+            <AlertTriangle size={22} className="crisis-panel__icon" aria-hidden />
+            <h2 className="crisis-panel__title">Crisis!</h2>
+            <button type="button" onClick={close} className="crisis-panel__close" aria-label="Close">
+              <X size={18} />
+            </button>
+          </div>
+          <h3 className="crisis-panel__name">{def?.name ?? active.instance.definitionId}</h3>
+        </div>
+
+        <div className="crisis-panel__body">
           {imgSrc && (
             <img
               src={imgSrc}
               alt=""
-              className="crisis-card-art__img flex-shrink-0"
-              style={{ width: '5.5rem' }}
+              className="crisis-panel__art"
               draggable={false}
             />
           )}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="font-display font-bold text-xl text-danger">Crisis!</h2>
-              <button
-                type="button"
-                onClick={() => setModal('crisis', false)}
-                className="ml-auto"
-                aria-label="Close"
-              >
-                <X size={20} className="text-muted" />
-              </button>
-            </div>
-            <h3 className="font-display font-bold text-lg text-text mt-2">
-              {def?.name ?? active.instance.definitionId}
-            </h3>
-          </div>
+          <p className="crisis-panel__desc">{def?.description ?? 'Temporary crisis in effect'}</p>
         </div>
 
-        <p className="text-sm text-muted font-body mb-6">
-          {def?.description ?? 'Temporary crisis in effect'}
-        </p>
-
-        <button
-          type="button"
-          onClick={() => setModal('crisis', false)}
-          className="w-full px-4 py-2 rounded-lg text-sm font-body bg-danger text-white hover:bg-danger/80"
-        >
+        <Button onClick={close} full>
           Acknowledge
-        </button>
+        </Button>
       </div>
     </div>
   )

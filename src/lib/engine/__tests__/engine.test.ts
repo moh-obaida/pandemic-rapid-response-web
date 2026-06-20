@@ -406,6 +406,201 @@ describe('waste loss', () => {
   })
 })
 
+describe('dice lifecycle', () => {
+  it('rerolls spent and hand dice without duplicating on second roll', () => {
+    let state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 2,
+      crisisEnabled: false,
+      players: [
+        { id: 'p1', name: 'A', isHost: true },
+        { id: 'p2', name: 'B', isHost: false },
+      ],
+    })
+    const p1 = state.activePlayerId
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: p1 }) as typeof state
+    const firstIds = state.dice.filter((d) => d.ownerId === p1).map((d) => d.id)
+    expect(firstIds).toHaveLength(6)
+
+    const dieInRoom = state.dice.find((d) => d.ownerId === p1 && d.location === 'hand')!
+    state.roomSlots.water = [dieInRoom.id, null]
+    dieInRoom.location = 'room'
+    dieInRoom.roomId = 'water'
+    dieInRoom.slotIndex = 0
+    dieInRoom.locked = true
+
+    const spent = state.dice.find((d) => d.ownerId === p1 && d.location === 'hand')!
+    spent.location = 'spent'
+
+    state = applyAction(state, { type: 'END_TURN', playerId: p1 }) as typeof state
+    const p2 = state.activePlayerId
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: p2 }) as typeof state
+    state = applyAction(state, { type: 'END_TURN', playerId: p2 }) as typeof state
+
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: p1 }) as typeof state
+    const p1Dice = state.dice.filter((d) => d.ownerId === p1)
+    expect(p1Dice).toHaveLength(6)
+    expect(p1Dice.filter((d) => d.location === 'hand').length).toBeGreaterThan(0)
+    expect(p1Dice.find((d) => d.id === dieInRoom.id)?.location).toBe('room')
+    expect(p1Dice.find((d) => d.id === spent.id)?.location).toBe('hand')
+  })
+})
+
+describe('group assignment', () => {
+  it('assigns a full water group in one action', () => {
+    let state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 1,
+      crisisEnabled: false,
+      players: [{ id: 'p1', name: 'A', isHost: true }],
+    })
+    state.players[0].position = 'water'
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: 'p1' }) as typeof state
+    const waterDice = state.dice
+      .filter((d) => d.ownerId === 'p1' && d.location === 'hand')
+      .slice(0, 2)
+    waterDice[0].face = 'water'
+    waterDice[1].face = 'water'
+
+    state = applyAction(state, {
+      type: 'ASSIGN_DICE_GROUP',
+      playerId: 'p1',
+      roomId: 'water',
+      dieIds: waterDice.map((d) => d.id),
+      startSlot: 0,
+    }) as typeof state
+
+    expect(state.roomSlots.water?.[0]).toBe(waterDice[0].id)
+    expect(state.roomSlots.water?.[1]).toBe(waterDice[1].id)
+  })
+
+  it('rejects partial group assignment via ASSIGN_DIE', () => {
+    let state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 1,
+      crisisEnabled: false,
+      players: [{ id: 'p1', name: 'A', isHost: true }],
+    })
+    state.players[0].position = 'water'
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: 'p1' }) as typeof state
+    const die = state.dice.find((d) => d.ownerId === 'p1' && d.location === 'hand')!
+    die.face = 'water'
+    const result = applyAction(state, {
+      type: 'ASSIGN_DIE',
+      playerId: 'p1',
+      dieId: die.id,
+      roomId: 'water',
+      slotIndex: 0,
+    })
+    expect(isRuleError(result)).toBe(true)
+  })
+})
+
+describe('cargo activation', () => {
+  it('spends plane die and clears cargo when no city is present', () => {
+    let state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 1,
+      crisisEnabled: false,
+      players: [{ id: 'p1', name: 'A', isHost: true }],
+    })
+    state.players[0].position = 'cargo'
+    state.cities.forEach((c) => {
+      if (c.status === 'faceUpOnPath') c.status = 'discarded'
+    })
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: 'p1' }) as typeof state
+    const plane = state.dice.find((d) => d.ownerId === 'p1' && d.location === 'hand')!
+    plane.face = 'plane'
+    state.roomSlots.cargo = [plane.id]
+    plane.location = 'room'
+    plane.roomId = 'cargo'
+    plane.locked = true
+
+    state = applyAction(state, {
+      type: 'ACTIVATE_ROOM',
+      playerId: 'p1',
+      roomId: 'cargo',
+    }) as typeof state
+
+    expect(state.roomSlots.cargo?.[0]).toBeNull()
+    expect(state.dice.find((d) => d.id === plane.id)?.location).toBe('spent')
+  })
+})
+
+describe('recycler', () => {
+  it('counts slot 0 as ghost-filled for recycling activation', () => {
+    let state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 1,
+      crisisEnabled: false,
+      players: [{ id: 'p1', name: 'A', isHost: true }],
+    })
+    state.players[0].role = 'recycler'
+    state.players[0].position = 'recycling'
+    state.waste = 4
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: 'p1' }) as typeof state
+    const dice = state.dice.filter((d) => d.ownerId === 'p1' && d.location === 'hand').slice(0, 4)
+    dice.forEach((d, i) => {
+      d.face = (['water', 'food', 'power', 'vaccine'] as const)[i]
+    })
+    for (let i = 0; i < dice.length; i++) {
+      state = applyAction(state, {
+        type: 'ASSIGN_DIE',
+        playerId: 'p1',
+        dieId: dice[i].id,
+        roomId: 'recycling',
+        slotIndex: i + 1,
+      }) as typeof state
+    }
+
+    state = applyAction(state, {
+      type: 'ACTIVATE_ROOM',
+      playerId: 'p1',
+      roomId: 'recycling',
+    }) as typeof state
+    expect(state.waste).toBe(0)
+  })
+
+  it('excludes chosen die from waste roll', () => {
+    const state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 1,
+      crisisEnabled: false,
+      players: [{ id: 'p1', name: 'A', isHost: true }],
+    })
+    state.waste = 0
+    state.roomSlots.water = ['die-w1', 'die-w2']
+    state.dice.push(
+      {
+        id: 'die-w1',
+        face: 'water',
+        ownerId: 'p1',
+        location: 'room',
+        roomId: 'water',
+        slotIndex: 0,
+        locked: true,
+      },
+      {
+        id: 'die-w2',
+        face: 'water',
+        ownerId: 'p1',
+        location: 'room',
+        roomId: 'water',
+        slotIndex: 1,
+        locked: true,
+      }
+    )
+    state.pendingWasteRoll = {
+      roomId: 'water',
+      dieIds: ['die-w1', 'die-w2'],
+      recyclerPlayerId: 'p1',
+    }
+    const next = cloneState(state)
+    resolveWasteRoll(next, { 'die-w1': 'plane', 'die-w2': 'plane' }, 'die-w1')
+    expect(next.waste).toBe(1)
+  })
+})
+
 describe('getLegalActions', () => {
   it('includes ROLL_DICE on active player roll step', async () => {
     const { getLegalActions } = await import('../getLegalActions')

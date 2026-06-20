@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { SiteLayout } from '../components/layout/SiteLayout'
 import { SeoHead } from '../components/layout/SeoHead'
 import { Button } from '../components/ds/Button'
+import { MissionCtaBand } from '../components/layout/MissionCtaBand'
 import { MissionPreview } from '../components/landing/MissionPreview'
 import { RoleDeckShowcase } from '../components/landing/RoleDeckShowcase'
 import { BoardTableImage } from '../components/landing/BoardTableFrame'
@@ -162,15 +163,15 @@ export function LandingPage() {
             form.
           </p>
           <div className="mission-hero__actions">
-            <Link to="/play" style={{ textDecoration: 'none' }}>
+            <Link to="/play" className="link-plain">
               <Button size="lg">Start Mission</Button>
             </Link>
-            <Link to="/play?join=1" style={{ textDecoration: 'none' }}>
+            <Link to="/play?join=1" className="link-plain">
               <Button variant="secondary" size="lg">
                 Join Room
               </Button>
             </Link>
-            <Link to="/rules" style={{ textDecoration: 'none' }}>
+            <Link to="/rules" className="link-plain">
               <Button variant="ghost" size="lg">
                 View Rules
               </Button>
@@ -264,10 +265,10 @@ export function LandingPage() {
               Create a private mission room. Share the room code. Start when the crew is ready.
             </p>
             <div className="mission-hero__actions">
-              <Link to="/play?create=1" style={{ textDecoration: 'none' }}>
+              <Link to="/play?create=1" className="link-plain">
                 <Button size="lg">Create Room</Button>
               </Link>
-              <Link to="/play?join=1" style={{ textDecoration: 'none' }}>
+              <Link to="/play?join=1" className="link-plain">
                 <Button variant="secondary" size="lg">
                   Join with Code
                 </Button>
@@ -282,13 +283,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="mission-cta-band">
-        <p className="mission-section__eyebrow">Launch clearance</p>
-        <h2 className="mission-cta-band__title">Ready for launch?</h2>
-        <Link to="/play" style={{ textDecoration: 'none' }}>
-          <Button size="lg">Start Mission</Button>
-        </Link>
-      </section>
+      <MissionCtaBand />
     </SiteLayout>
   )
 }

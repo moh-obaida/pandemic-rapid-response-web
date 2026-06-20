@@ -16,7 +16,7 @@ export function DicePool({
   rolling,
   disabled,
 }: DicePoolProps) {
-  const handDice = dice.filter((d) => d.location === 'hand')
+  const handDice = dice.filter((d) => d.location === 'hand' || d.location === 'hq')
 
   return (
     <div className="dice-pool" aria-label="Your dice pool">

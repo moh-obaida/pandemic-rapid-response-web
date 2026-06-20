@@ -17,6 +17,7 @@ import { BoardStage } from '../components/layout/game/BoardStage'
 import { MissionStatusPanel } from '../components/layout/game/MissionStatusPanel'
 import { DiceHandBar } from '../components/game/DiceHandBar'
 import { TimerExpiredOverlay } from '../components/Modals/TimerExpiredOverlay'
+import { WasteRollOverlay } from '../components/Modals/WasteRollOverlay'
 import { startGame, startGameLocal } from '../lib/firebase'
 import { track } from '../lib/analytics'
 import { assetManifest } from '../lib/assetManifest'
@@ -44,6 +45,7 @@ export function GamePage() {
 
   const [previewCityId, setPreviewCityId] = useState<number | null>(null)
   const [previewPlayer, setPreviewPlayer] = useState<PlayerView | null>(null)
+  const [codeCopied, setCodeCopied] = useState(false)
 
   useEffect(() => {
     if (!roomCode) navigate('/play')
@@ -62,8 +64,11 @@ export function GamePage() {
     })
   }
 
-  const copyCode = () => {
-    if (roomCode) navigator.clipboard.writeText(roomCode)
+  const copyCode = async () => {
+    if (!roomCode) return
+    await navigator.clipboard.writeText(roomCode)
+    setCodeCopied(true)
+    window.setTimeout(() => setCodeCopied(false), 2000)
   }
 
   if (!roomCode) return null
@@ -84,9 +89,14 @@ export function GamePage() {
 
           <div className="mission-waiting-room__code-row">
             <span className="mission-waiting-room__code">{roomCode}</span>
-            <button type="button" onClick={copyCode} aria-label="Copy room code" className="mission-waiting-room__copy">
+            <button
+              type="button"
+              onClick={copyCode}
+              aria-label="Copy room code"
+              className={`mission-waiting-room__copy${codeCopied ? ' mission-waiting-room__copy--copied' : ''}`}
+            >
               <Copy size={16} />
-              Copy Code
+              {codeCopied ? 'Copied!' : 'Copy Code'}
             </button>
           </div>
 
@@ -204,7 +214,7 @@ export function GamePage() {
             isMyTurn={controls.isMyTurn}
             rerollsRemaining={controls.rerollsRemaining}
             pendingConfirm={controls.pendingConfirm}
-            dice={controls.currentPlayer?.dice ?? []}
+            dice={controls.selectableDice}
             onDieClick={controls.handleDieClick}
             onRoll={controls.rollDice}
             onRerollSelected={controls.handleRerollSelected}
@@ -218,6 +228,7 @@ export function GamePage() {
       />
 
       <TimerExpiredOverlay />
+      <WasteRollOverlay />
 
       {previewCityId !== null && (
         <CityCardPreview cityId={previewCityId} onClose={() => setPreviewCityId(null)} />

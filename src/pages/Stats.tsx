@@ -1,17 +1,28 @@
+import { Link } from 'react-router-dom'
 import { useGameStore } from '../store/gameStore'
-import { useNavigate } from 'react-router-dom'
+import { SiteLayout } from '../components/layout/SiteLayout'
+import { SeoHead } from '../components/layout/SeoHead'
+import { PageHeader } from '../components/layout/PageHeader'
+import { DocSection } from '../components/layout/DocSection'
 import { getPlayerViews, TOKEN_DISPLAY } from '../lib/engine/selectors'
-import { BarChart3, ArrowLeft } from 'lucide-react'
+import { ArrowLeft, BarChart3 } from 'lucide-react'
 
 export function StatsPage() {
-  const navigate = useNavigate()
   const snapshot = useGameStore((s) => s.snapshot)
 
   if (!snapshot) {
     return (
-      <div className="min-h-screen bg-canvas flex items-center justify-center p-8">
-        <p className="text-muted font-body">No active game session</p>
-      </div>
+      <SiteLayout>
+        <SeoHead title="Mission Statistics" description="Live mission statistics." path="/stats" />
+        <PageHeader eyebrow="Mission telemetry" title="Mission Statistics" />
+        <article className="mission-prose">
+          <p>No active game session. Start or join a mission to view live stats.</p>
+          <Link to="/play" className="mission-stats-back">
+            <ArrowLeft size={14} />
+            Return to mission access
+          </Link>
+        </article>
+      </SiteLayout>
     )
   }
 
@@ -19,16 +30,15 @@ export function StatsPage() {
   const delivered = snapshot.cities.filter((c) => c.status === 'delivered').length
 
   return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center p-8">
-      <div className="w-[600px] rounded-2xl bg-surface border border-white/10 p-8">
-        <div className="flex items-center gap-2 mb-6">
-          <BarChart3 className="text-primary" size={24} />
-          <h1 className="font-display font-bold text-2xl text-text">
-            Game Statistics
-          </h1>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
+    <SiteLayout>
+      <SeoHead title="Mission Statistics" description="Live mission statistics." path="/stats" />
+      <PageHeader
+        eyebrow="Mission telemetry"
+        title="Mission Statistics"
+        subtitle="Live readout from the current session"
+      />
+      <div className="mission-stats-panel">
+        <div className="mission-stats-grid">
           <StatCard label="Waste" value={`${snapshot.waste}/${TOKEN_DISPLAY.wasteMax}`} />
           <StatCard label="Cities Delivered" value={`${delivered}/24`} />
           <StatCard label="HQ Tokens" value={`${snapshot.hqTokens}/${TOKEN_DISPLAY.hqMax}`} />
@@ -38,41 +48,33 @@ export function StatsPage() {
           />
         </div>
 
-        <h2 className="font-display font-bold text-lg text-text mb-3">Players</h2>
-        <div className="space-y-2 mb-8">
-          {players.map((p) => (
-            <div
-              key={p.id}
-              className="flex justify-between px-3 py-2 rounded-lg bg-canvas text-sm font-body"
-            >
-              <span className="text-text">{p.name}</span>
-              <span className="text-muted capitalize">
-                {p.role.replace(/([A-Z])/g, ' $1').trim()}
-              </span>
-            </div>
-          ))}
-        </div>
+        <DocSection title="Connected crew">
+          <ul className="mission-stats-players">
+            {players.map((p) => (
+              <li key={p.id} className="mission-stats-player">
+                <span>{p.name}</span>
+                <span className="mission-stats-player__role">
+                  {p.role.replace(/([A-Z])/g, ' $1').trim()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </DocSection>
 
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-sm text-muted font-body hover:text-text"
-        >
-          <ArrowLeft size={14} />
-          Back to Lobby
-        </button>
+        <Link to="/game" className="mission-stats-back">
+          <BarChart3 size={14} />
+          Return to mission board
+        </Link>
       </div>
-    </div>
+    </SiteLayout>
   )
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-canvas p-4">
-      <div className="text-xs text-muted font-body uppercase tracking-wider mb-1">
-        {label}
-      </div>
-      <div className="text-2xl font-mono font-bold text-text">{value}</div>
-    </div>
+    <article className="mission-stat-card glass-panel">
+      <div className="mission-stat-card__value">{value}</div>
+      <div className="mission-stat-card__label">{label}</div>
+    </article>
   )
 }

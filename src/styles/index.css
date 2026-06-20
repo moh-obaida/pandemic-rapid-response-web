@@ -31,7 +31,6 @@ body,
 .site-page {
   min-height: 100vh;
   overflow-y: auto;
-  background: var(--bg-app);
 }
 
 .game-viewport {

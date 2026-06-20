@@ -1,5 +1,5 @@
 export { setupGame, rollDiceForPlayer, getRerollsMax, cloneState, createInitialCrates } from './setup'
-export { applyAction, autoResolveWasteRoll, resolveTimerEvent } from './applyAction'
+export { applyAction, resolveTimerEvent } from './applyAction'
 export { getLegalActions, getRerollsRemaining } from './getLegalActions'
 export * from './selectors'
 export { transferCratesToCargo, hasCratesInCargo } from './crates'

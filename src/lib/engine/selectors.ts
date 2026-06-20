@@ -36,6 +36,20 @@ export function getPlayerDice(state: GameSnapshot, playerId: string): EngineDie[
   return state.dice.filter((d) => d.ownerId === playerId && d.location !== 'spent')
 }
 
+/** Hand dice plus Director HQ dice when the active player is in HQ. */
+export function getSelectableDice(state: GameSnapshot, playerId: string): EngineDie[] {
+  const player = state.players.find((p) => p.id === playerId)
+  if (!player) return []
+  const hand = state.dice.filter(
+    (d) => d.ownerId === playerId && d.location === 'hand' && !d.locked
+  )
+  if (player.position === 'hq') {
+    const hqDice = state.dice.filter((d) => d.location === 'hq' && !d.locked)
+    return [...hand, ...hqDice]
+  }
+  return hand
+}
+
 export function getCratesInRoom(state: GameSnapshot, roomId: RoomId) {
   return state.crates.filter((c) => c.location === roomId)
 }
@@ -92,9 +106,12 @@ export function canDeliverAtPlane(state: GameSnapshot): boolean {
   return hasCratesInCargo(state, req)
 }
 
-export function getRoomActivationCount(state: GameSnapshot, roomId: RoomId): number {
-  const slots = state.roomSlots[roomId] ?? []
-  return countCompletedGroups(roomId, slots)
+export function getRoomActivationCount(
+  state: GameSnapshot,
+  roomId: RoomId,
+  playerId?: string
+): number {
+  return countCompletedGroups(state, roomId, playerId)
 }
 
 export function dieFaceToSupplyType(face: DieFace): SupplyType | 'plane' {

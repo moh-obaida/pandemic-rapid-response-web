@@ -1,10 +1,11 @@
 import { rollDieFace } from '../constants/dice'
-import type { DieFace } from '../constants/dice'
 import type { GameAction, GameSnapshot, ApplyResult, RuleError } from '../../types/engine'
 import { cloneState, rollDiceForPlayer, getRerollsMax } from './setup'
 import {
   canAssignDie,
+  canAssignDiceGroup,
   assignDie,
+  assignDiceGroup,
   activateRoom,
   resolveWasteRoll,
 } from './rooms'
@@ -45,13 +46,7 @@ export function applyAction(
       if (next.activePlayerId !== action.playerId)
         return { error: 'Not your turn' }
       if (next.turnStep !== 'roll') return { error: 'Already rolled' }
-      const hand = rollDiceForPlayer(next, action.playerId)
-      next.dice = [
-        ...next.dice.filter(
-          (d) => d.ownerId !== action.playerId || d.location === 'spent'
-        ),
-        ...hand,
-      ]
+      rollDiceForPlayer(next, action.playerId)
       next.turnStep = 'useDice'
       const player = next.players.find((p) => p.id === action.playerId)
       if (player) player.rerollsUsed = 0
@@ -77,6 +72,31 @@ export function applyAction(
       return next
     }
 
+    case 'ASSIGN_DICE_GROUP': {
+      const paused = blockIfPaused(next)
+      if (paused) return paused
+      const active = requireActive(next, action.playerId)
+      if (active) return active
+      const phase = requireUseDice(next)
+      if (phase) return phase
+      const err = canAssignDiceGroup(
+        next,
+        action.playerId,
+        action.roomId,
+        action.dieIds,
+        action.startSlot
+      )
+      if (err) return { error: err }
+      assignDiceGroup(
+        next,
+        action.playerId,
+        action.roomId,
+        action.dieIds,
+        action.startSlot
+      )
+      return next
+    }
+
     case 'ACTIVATE_ROOM': {
       const paused = blockIfPaused(next)
       if (paused) return paused
@@ -94,7 +114,7 @@ export function applyAction(
       if (paused) return paused
       if (next.turnStep !== 'useDice') return { error: 'Not in use dice phase' }
       if (!next.pendingWasteRoll) return { error: 'No pending waste roll' }
-      const err = resolveWasteRoll(next, action.dieRolls)
+      const err = resolveWasteRoll(next, action.dieRolls, action.excludedDieId)
       if (err) return { error: err }
       return next
     }
@@ -230,18 +250,6 @@ export function applyAction(
     default:
       return { error: 'Unknown action' }
   }
-}
-
-export function autoResolveWasteRoll(state: GameSnapshot): GameSnapshot {
-  if (!state.pendingWasteRoll) return state
-  const rolls: Record<string, DieFace> = {}
-  for (const id of state.pendingWasteRoll.dieIds) {
-    const die = state.dice.find((d) => d.id === id)
-    if (die) rolls[id] = rollDieFace()
-  }
-  const next = cloneState(state)
-  resolveWasteRoll(next, rolls)
-  return next
 }
 
 /** Test helper: full timer interrupt cycle. */

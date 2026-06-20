@@ -1,8 +1,24 @@
 import { SiteLayout } from '../components/layout/SiteLayout'
 import { SeoHead } from '../components/layout/SeoHead'
 import { PageHeader } from '../components/layout/PageHeader'
+import { MissionCtaBand } from '../components/layout/MissionCtaBand'
 import { CITIES } from '../lib/constants/cities'
 import { cityImagePathById } from '../lib/assetManifest'
+import type { SupplyType } from '../types/board'
+
+const SUPPLY_LABELS: Record<SupplyType, string> = {
+  water: 'Water',
+  food: 'Food',
+  vaccine: 'Vaccine',
+  power: 'Power',
+  firstAid: 'First Aid',
+}
+
+function formatRequirements(crates: Partial<Record<SupplyType, number>>) {
+  return Object.entries(crates)
+    .map(([type, count]) => `${count}× ${SUPPLY_LABELS[type as SupplyType]}`)
+    .join(' · ')
+}
 
 export function CardsPage() {
   return (
@@ -13,6 +29,7 @@ export function CardsPage() {
         path="/cards"
       />
       <PageHeader
+        eyebrow="Flightpath manifest"
         title="City Cards"
         subtitle="Cities appear as the mission timer runs — deliver the exact cargo mix to each."
       />
@@ -26,9 +43,11 @@ export function CardsPage() {
               loading="lazy"
             />
             <figcaption className="mission-card-thumb__name">{city.name}</figcaption>
+            <p className="mission-card-thumb__req">{formatRequirements(city.crates)}</p>
           </figure>
         ))}
       </div>
+      <MissionCtaBand />
     </SiteLayout>
   )
 }

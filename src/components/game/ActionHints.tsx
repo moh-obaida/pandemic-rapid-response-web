@@ -83,8 +83,8 @@ export function ActionHints({
       {lastError && (
         <p className="dice-dock__error">
           {lastError}
-          <button type="button" onClick={clearError} className="dice-dock__dismiss">
-            dismiss
+          <button type="button" onClick={clearError} className="dice-dock__dismiss-btn">
+            Dismiss
           </button>
         </p>
       )}

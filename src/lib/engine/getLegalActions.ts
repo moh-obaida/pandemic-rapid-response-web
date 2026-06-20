@@ -28,15 +28,24 @@ export function getLegalActions(
     const handDice = state.dice.filter(
       (d) => d.ownerId === playerId && d.location === 'hand' && !d.locked
     )
+    const hqDice =
+      player.position === 'hq'
+        ? state.dice.filter((d) => d.location === 'hq' && !d.locked)
+        : []
+    const movableDice = [...handDice, ...hqDice]
+
     if (handDice.length > 0) {
       actions.push('REROLL')
+    }
+
+    if (movableDice.length > 0) {
       for (const roomId of ROOM_ORDER) {
-        if (canMove(state, playerId, [handDice[0].id], roomId) === null) {
+        if (canMove(state, playerId, [movableDice[0].id], roomId) === null) {
           actions.push('SPEND_MOVE')
           break
         }
       }
-      const planeDice = handDice.filter((d) => d.face === 'plane')
+      const planeDice = movableDice.filter((d) => d.face === 'plane')
       if (planeDice.length > 0) {
         if (canFly(state, playerId, [planeDice[0].id], 'left') === null) {
           actions.push('SPEND_FLY')
@@ -48,13 +57,14 @@ export function getLegalActions(
       actions.push('ACTIVATE_ROOM')
       const slots = state.roomSlots[player.position] ?? []
       for (let i = 0; i < slots.length; i++) {
-        for (const die of handDice) {
+        for (const die of movableDice) {
           if (canAssignDie(state, playerId, die.id, player.position, i) === null) {
             actions.push('ASSIGN_DIE')
             break
           }
         }
       }
+      actions.push('ASSIGN_DICE_GROUP')
     }
 
     if (player.role === 'engineer') {
