@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react'
 import { DicePool } from '../Players/DicePool'
 import { ActionHints } from './ActionHints'
 import { ConfirmBar } from './ConfirmBar'
 import { EngineerFlipPicker } from '../Board/overlays/FlyArrowOverlay'
 import { getDieById } from '../../lib/boardInteraction'
 import { useGameStore } from '../../store/gameStore'
+import { useDiceRollAnimation } from '../../hooks/useDiceRollAnimation'
+import { useCallback } from 'react'
 import type { PendingConfirm } from '../../types/controls'
 
 interface DiceHandBarProps {
@@ -54,24 +55,15 @@ export function DiceHandBar({
 }: DiceHandBarProps) {
   const snapshot = useGameStore((s) => s.snapshot)
   const isActionPending = useGameStore((s) => s.isActionPending)
-  const [rolling, setRolling] = useState(false)
+  const { isDieRolling, isRollingAny, queueRerollAnimation } = useDiceRollAnimation()
 
-  const inputsDisabled = controlsFrozen || isActionPending
+  const inputsDisabled = controlsFrozen || isActionPending || isRollingAny
 
-  const triggerRollAnimation = useCallback(() => {
-    setRolling(true)
-    window.setTimeout(() => setRolling(false), 520)
-  }, [])
-
-  const handleRoll = useCallback(() => {
-    triggerRollAnimation()
-    onRoll()
-  }, [onRoll, triggerRollAnimation])
-
-  const handleRerollSelected = useCallback(() => {
-    triggerRollAnimation()
-    onRerollSelected()
-  }, [onRerollSelected, triggerRollAnimation])
+  const handleRerollSelected = useCallback(async () => {
+    if (selectedDieIds.length === 0) return
+    queueRerollAnimation(selectedDieIds)
+    await onRerollSelected()
+  }, [selectedDieIds, queueRerollAnimation, onRerollSelected])
 
   const showEngineerFlip =
     isMyTurn &&
@@ -103,7 +95,7 @@ export function DiceHandBar({
                   dice={dice}
                   selectedDieIds={selectedDieIds}
                   onDieClick={onDieClick}
-                  rolling={rolling}
+                  isDieRolling={isDieRolling}
                   disabled={inputsDisabled}
                 />
               ) : isMyTurn && turnStep === 'roll' ? (
@@ -129,11 +121,11 @@ export function DiceHandBar({
             turnStep={turnStep}
             isMyTurn={isMyTurn}
             rerollsRemaining={rerollsRemaining}
-            onRoll={handleRoll}
+            onRoll={onRoll}
             onRerollSelected={handleRerollSelected}
             onEndTurn={onEndTurn}
             onCancelSelection={onCancelSelection}
-            rolling={rolling}
+            rolling={isRollingAny}
           />
         </>
       )}

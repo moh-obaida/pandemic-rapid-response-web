@@ -12,7 +12,7 @@ export function BoardStage({ children, onCityClick }: BoardStageProps) {
   return (
     <div className="board-stage-inner board-stage-inner--table">
       <div className="board-stage-inner__main">
-        <BoardTableFrame className="mission-table--game" label="Command table · Active sector">
+        <BoardTableFrame className="mission-table--game" label="Live board">
           {children}
         </BoardTableFrame>
       </div>

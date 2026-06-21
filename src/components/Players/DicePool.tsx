@@ -5,7 +5,7 @@ interface DicePoolProps {
   dice: EngineDie[]
   selectedDieIds?: string[]
   onDieClick?: (dieId: string, additive: boolean) => void
-  rolling?: boolean
+  isDieRolling?: (dieId: string) => boolean
   disabled?: boolean
 }
 
@@ -13,7 +13,7 @@ export function DicePool({
   dice,
   selectedDieIds = [],
   onDieClick,
-  rolling,
+  isDieRolling,
   disabled,
 }: DicePoolProps) {
   const handDice = dice.filter((d) => d.location === 'hand' || d.location === 'hq')
@@ -27,9 +27,9 @@ export function DicePool({
           size={44}
           selected={selectedDieIds.includes(die.id)}
           locked={die.locked}
-          rolling={rolling}
+          rolling={isDieRolling?.(die.id) ?? false}
           onClick={
-            die.locked || !onDieClick || disabled
+            die.locked || !onDieClick || disabled || isDieRolling?.(die.id)
               ? undefined
               : (e) => onDieClick(die.id, e.shiftKey || e.metaKey || e.ctrlKey)
           }

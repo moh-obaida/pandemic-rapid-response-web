@@ -1,8 +1,14 @@
 import type { PlayerView } from '../../../lib/engine/selectors'
+import { BOARD_HOTSPOTS } from '../../../lib/boardHotspots'
 import { roleImagePath, dieImagePath } from '../../../lib/assetManifest'
 import { ROLES } from '../../../lib/constants'
+import type { RoomId } from '../../../types/board'
 
 const PAWN_COLORS = ['#38bdf8', '#f472b6', '#a3e635', '#fb923c', '#c084fc', '#2dd4bf', '#facc15']
+
+const ROOM_LABELS = Object.fromEntries(
+  BOARD_HOTSPOTS.map((h) => [h.roomId, h.label])
+) as Record<RoomId, string>
 
 interface PlayerRailProps {
   players: PlayerView[]
@@ -53,6 +59,7 @@ export function PlayerRail({ players, playerId, onRoleClick }: PlayerRailProps) 
                 <div className="player-seat__info">
                   <span className="player-seat__name">{player.name}</span>
                   <span className="player-seat__role-name">{role?.name}</span>
+                  <span className="player-seat__room">In: {ROOM_LABELS[player.position]}</span>
                   <span
                     className={`player-seat__status${player.isActive ? ' player-seat__status--active' : ''}`}
                   >

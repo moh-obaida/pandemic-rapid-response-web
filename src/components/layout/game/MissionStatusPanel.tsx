@@ -1,25 +1,23 @@
 import type { ReactNode } from 'react'
 import { useGameStore } from '../../../store/gameStore'
+import { ActiveCityDisplay } from '../../Board/ActiveCityDisplay'
 import { WasteTrack } from '../../Board/WasteTrack'
 import { TimeTokens } from '../../Board/TimeTokens'
 import { CrisisDisplay } from '../../Board/CrisisDisplay'
 import { CityDeckDisplay } from '../../Board/CityDeckDisplay'
 import { CargoStatusDisplay } from '../../Board/CargoStatusDisplay'
-import { assetManifest } from '../../../lib/assetManifest'
 
-function InstrumentSection({
+function StatusSection({
   label,
-  bg,
   children,
 }: {
   label: string
-  bg?: string
   children: ReactNode
 }) {
   return (
-    <section className="mission-status-panel__section instrument-panel" aria-label={label}>
-      {bg && <img src={bg} alt="" className="instrument-panel__bg" draggable={false} />}
-      <div className="instrument-panel__content">{children}</div>
+    <section className="mission-status-panel__section" aria-label={label}>
+      <h3 className="mission-status-panel__label">{label}</h3>
+      {children}
     </section>
   )
 }
@@ -33,21 +31,22 @@ export function MissionStatusPanel() {
       {crisisEnabled && (
         <p className="mission-status-panel__crisis-on">Crisis mode active</p>
       )}
-      <InstrumentSection label="HQ and supply tokens" bg={assetManifest.board.controlPanel}>
+      <ActiveCityDisplay />
+      <StatusSection label="Tokens">
         <TimeTokens />
-      </InstrumentSection>
-      <InstrumentSection label="Waste track" bg={assetManifest.board.radar}>
+      </StatusSection>
+      <StatusSection label="Waste">
         <WasteTrack compact />
-      </InstrumentSection>
-      <InstrumentSection label="Cargo bay">
+      </StatusSection>
+      <StatusSection label="Cargo">
         <CargoStatusDisplay />
-      </InstrumentSection>
-      <InstrumentSection label="City deck">
+      </StatusSection>
+      <StatusSection label="City deck">
         <CityDeckDisplay />
-      </InstrumentSection>
-      <InstrumentSection label="Crisis">
+      </StatusSection>
+      <StatusSection label="Crisis">
         <CrisisDisplay />
-      </InstrumentSection>
+      </StatusSection>
     </div>
   )
 }

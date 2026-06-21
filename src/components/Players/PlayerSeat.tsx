@@ -8,7 +8,6 @@ interface PlayerSeatProps {
   isSelf?: boolean
   selectedDieId?: string | null
   onDieClick?: (dieId: string) => void
-  rolling?: boolean
 }
 
 export function PlayerSeat({
@@ -16,7 +15,6 @@ export function PlayerSeat({
   isSelf,
   selectedDieId,
   onDieClick,
-  rolling,
 }: PlayerSeatProps) {
   return (
     <div
@@ -36,7 +34,6 @@ export function PlayerSeat({
           dice={player.dice}
           selectedDieIds={selectedDieId ? [selectedDieId] : []}
           onDieClick={onDieClick ? (id) => onDieClick(id) : undefined}
-          rolling={rolling}
           disabled
         />
       )}

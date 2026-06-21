@@ -112,7 +112,9 @@ body,
   .animate-fade-in,
   .animate-waste-slide,
   .animate-plane-glide,
-  .animate-timer-flash {
+  .animate-timer-flash,
+  .game-die--rolling,
+  .game-die--settled {
     animation: none;
   }
 }
