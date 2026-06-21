@@ -5,7 +5,7 @@ export function ActionPendingIndicator() {
   if (!pending) return null
 
   return (
-    <div className="action-pending" role="status" aria-live="polite" aria-label="Sending action">
+    <div className="action-pending" role="status" aria-live="polite" aria-label="Sending action" data-testid="action-pending-indicator">
       <span className="action-pending__spinner" aria-hidden />
       <span className="action-pending__label">Syncing…</span>
     </div>

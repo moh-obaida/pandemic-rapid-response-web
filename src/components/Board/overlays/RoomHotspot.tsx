@@ -53,6 +53,7 @@ export function RoomHotspot({
       aria-label={label}
       aria-pressed={selected ? true : undefined}
       data-room-id={roomId}
+      data-testid={`board-hotspot-${roomId}`}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
     />

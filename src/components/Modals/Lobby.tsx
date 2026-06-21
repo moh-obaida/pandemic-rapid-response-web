@@ -105,7 +105,7 @@ export function LobbyModal({ onGameStart, initialMode = 'menu' }: LobbyModalProp
   }
 
   return (
-    <div className="mission-room">
+    <div className="mission-room" data-testid="lobby-room">
       <Panel className="mission-room__panel glass-panel glass-panel--accent-top" padding={32}>
         <div className="mission-room__header">
           <Link to="/">
@@ -148,6 +148,7 @@ export function LobbyModal({ onGameStart, initialMode = 'menu' }: LobbyModalProp
                 className="mission-room__input"
                 placeholder="Commander"
                 maxLength={20}
+                data-testid="lobby-callsign-input"
               />
             </label>
 
@@ -161,6 +162,7 @@ export function LobbyModal({ onGameStart, initialMode = 'menu' }: LobbyModalProp
                   className="mission-room__input mission-room__input--code"
                   placeholder="ABC123"
                   maxLength={6}
+                  data-testid="lobby-room-code-input"
                 />
               </label>
             )}
@@ -214,6 +216,7 @@ export function LobbyModal({ onGameStart, initialMode = 'menu' }: LobbyModalProp
                 onClick={mode === 'create' ? handleCreate : handleJoin}
                 disabled={loading}
                 icon={<Users size={14} />}
+                data-testid={mode === 'create' ? 'lobby-create-submit' : 'lobby-join-submit'}
               >
                 {loading ? 'Connecting…' : mode === 'create' ? 'Create Room' : 'Join with Code'}
               </Button>

@@ -87,7 +87,7 @@ export function GamePage() {
     return (
       <>
         <PortraitRotatePrompt />
-        <div className="mission-waiting-room">
+        <div className="mission-waiting-room" data-testid="crew-briefing">
         <div className="mission-waiting-room__panel">
           <p className="mission-waiting-room__eyebrow">Mission Room</p>
           <h1 className="mission-waiting-room__title">Crew Briefing</h1>
@@ -106,6 +106,7 @@ export function GamePage() {
               onClick={copyCode}
               aria-label="Copy room code"
               aria-live="polite"
+              data-testid="waiting-room-copy-code"
               className={`mission-waiting-room__copy${codeCopied ? ' mission-waiting-room__copy--copied' : ''}`}
             >
               <Copy size={16} />
@@ -170,12 +171,13 @@ export function GamePage() {
                 onClick={handleStart}
                 disabled={startingMission}
                 aria-busy={startingMission}
+                data-testid="waiting-room-start"
               >
                 <Play size={18} />
                 {startingMission ? 'Launching…' : 'Start Mission'}
               </button>
             ) : (
-              <p className="mission-waiting-room__wait" role="status">
+              <p className="mission-waiting-room__wait" role="status" data-testid="waiting-room-wait-host">
                 Waiting for host to start mission…
               </p>
             )}

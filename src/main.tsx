@@ -19,6 +19,10 @@ async function initSentry() {
 
 initSentry()
 
+if (import.meta.env.DEV) {
+  void import('./lib/qaBridge.dev').then(({ installQaBridge }) => installQaBridge())
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

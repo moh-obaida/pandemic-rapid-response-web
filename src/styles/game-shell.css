@@ -1299,7 +1299,7 @@
 }
 
 /* Portrait — React overlay handles rotate prompt; keep shell visible underneath */
-@media (orientation: portrait) and (max-width: 768px) {
+@media (orientation: portrait) and (max-width: 1100px) {
   .game-viewport {
     display: flex;
     align-items: center;

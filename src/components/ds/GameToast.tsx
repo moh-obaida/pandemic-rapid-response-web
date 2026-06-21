@@ -17,7 +17,7 @@ export function GameToast() {
   if (!lastError) return null
 
   return (
-    <div className="game-toast" role="alert" aria-live="assertive">
+    <div className="game-toast" role="alert" aria-live="assertive" data-testid="game-error-toast">
       <AlertTriangle size={16} className="game-toast__icon" aria-hidden />
       <p className="game-toast__message">{lastError}</p>
       <button type="button" className="game-toast__dismiss" onClick={clearError}>

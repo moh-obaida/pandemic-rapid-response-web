@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react'
 import { RotateCw, X } from 'lucide-react'
 import { Button } from '../../ds/Button'
+import { shouldShowPortraitPrompt } from '../../../lib/portraitPrompt'
 
-function isPortraitMobile(): boolean {
-  if (typeof window === 'undefined') return false
-  return window.innerWidth <= 768 && window.innerHeight > window.innerWidth
-}
-
-/** Full-screen prompt when the mission table is too cramped in portrait. */
+/** Full-screen prompt when portrait orientation is too narrow for the mission table. */
 export function PortraitRotatePrompt() {
-  const [visible, setVisible] = useState(isPortraitMobile)
+  const [visible, setVisible] = useState(shouldShowPortraitPrompt)
 
   useEffect(() => {
-    const onResize = () => setVisible(isPortraitMobile())
+    const onResize = () => setVisible(shouldShowPortraitPrompt())
     window.addEventListener('resize', onResize)
     window.addEventListener('orientationchange', onResize)
     return () => {
@@ -30,7 +26,12 @@ export function PortraitRotatePrompt() {
   if (!visible) return null
 
   return (
-    <div className="portrait-prompt" role="dialog" aria-labelledby="portrait-prompt-title">
+    <div
+      className="portrait-prompt"
+      role="dialog"
+      aria-labelledby="portrait-prompt-title"
+      data-testid="portrait-rotate-prompt"
+    >
       <div className="portrait-prompt__panel">
         <button
           type="button"

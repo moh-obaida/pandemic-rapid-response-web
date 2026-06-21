@@ -163,7 +163,7 @@ export function LandingPage() {
             form.
           </p>
           <div className="mission-hero__actions">
-            <Link to="/play" className="link-plain">
+            <Link to="/play" className="link-plain" data-testid="landing-start-mission">
               <Button size="lg">Start Mission</Button>
             </Link>
             <Link to="/play?join=1" className="link-plain">

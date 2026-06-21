@@ -84,6 +84,7 @@ export function BoardView({
     <div
       className={`board-stage board-view${controlsFrozen ? ' board-view--frozen' : ''}`}
       aria-label="Plane board"
+      data-testid="board-view"
     >
       <img
         src={assetManifest.board.planeBoard}

@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "analyze": "vite build --mode analyze"
+    "analyze": "vite build --mode analyze",
+    "qa:screenshots": "node scripts/qa-screenshots-prr.mjs"
   },
   "dependencies": {
     "firebase": "^12.14.0",
@@ -31,6 +32,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "playwright": "^1.52.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^4.3.1",
     "typescript": "~6.0.2",

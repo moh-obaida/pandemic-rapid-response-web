@@ -71,7 +71,7 @@ export function MissionHeader({
   if (isTimerEvent) timerClass += ' mission-bar__timer--event'
 
   return (
-    <div className="mission-bar mission-bar--control" role="status" aria-label="Mission status">
+    <div className="mission-bar mission-bar--control" role="status" aria-label="Mission status" data-testid="mission-header">
       <div className="mission-bar__left">
         <img
           src="/logos/prr-icon.svg"
