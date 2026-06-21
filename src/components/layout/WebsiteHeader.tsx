@@ -4,8 +4,7 @@ const NAV = [
   { to: '/how-to-play', label: 'Mission Guide' },
   { to: '/roles', label: 'Crew Roles' },
   { to: '/cards', label: 'City Cards' },
-  { to: '/rules', label: 'Mission Rules' },
-  { to: '/about', label: 'About' },
+  { to: '/rules', label: 'Rules' },
 ] as const
 
 export function WebsiteHeader() {
