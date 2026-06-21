@@ -12,6 +12,7 @@ import {
   roomAcceptsMove,
   roomAcceptsAssign,
 } from '../../lib/boardTargets'
+import { buildRoomAriaLabel, buildDieSlotAriaLabel } from '../../lib/boardAriaLabels'
 import type { RoomId } from '../../types/board'
 import { RoomHotspot } from './overlays/RoomHotspot'
 import { DieSlotHotspot } from './overlays/DieSlotHotspot'
@@ -86,7 +87,7 @@ export function BoardView({
     >
       <img
         src={assetManifest.board.planeBoard}
-        alt=""
+        alt="Pandemic Rapid Response aircraft board"
         className="board-view__art"
         draggable={false}
       />
@@ -121,11 +122,20 @@ export function BoardView({
           const deliveryGlow =
             spot.roomId === 'cargo' && deliveryReady && !controlsFrozen
 
+          const roomLabel = buildRoomAriaLabel(spot.label, {
+            selected: isSelected,
+            activeTurn: isActiveTurn,
+            validMove,
+            validAssign,
+            canActivate,
+            deliveryReady: deliveryGlow,
+          })
+
           return (
             <div key={spot.roomId}>
               <RoomHotspot
                 roomId={spot.roomId}
-                label={spot.label}
+                label={roomLabel}
                 selected={isSelected}
                 activeTurn={isActiveTurn}
                 validMove={validMove}
@@ -145,6 +155,7 @@ export function BoardView({
                     top: `${spot.top + spot.height - 2}%`,
                   }}
                   onClick={() => onRoomClick?.(spot.roomId)}
+                  aria-label={`Activate ${spot.label} room`}
                 >
                   Activate
                 </button>
@@ -188,6 +199,7 @@ export function BoardView({
                       key={`${spot.roomId}-slot-${slotIndex}`}
                       roomId={spot.roomId}
                       slotIndex={slotIndex}
+                      ariaLabel={buildDieSlotAriaLabel(spot.label, slotIndex, { validTarget: valid })}
                       validTarget={valid}
                       dieSelected={hasSelection}
                       onClick={
@@ -204,6 +216,11 @@ export function BoardView({
                     key={dieId}
                     roomId={spot.roomId}
                     slotIndex={slotIndex}
+                    ariaLabel={buildDieSlotAriaLabel(spot.label, slotIndex, {
+                      filled: true,
+                      face: die?.face,
+                      locked: die?.locked,
+                    })}
                     face={die?.face}
                     filled
                     locked={die?.locked}

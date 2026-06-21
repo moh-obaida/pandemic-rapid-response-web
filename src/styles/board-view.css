@@ -73,6 +73,17 @@
   pointer-events: none;
 }
 
+.board-hotspot:focus-visible,
+.board-die-slot:focus-visible,
+.board-fly-arrow:focus-visible,
+.board-city-tab__btn:focus-visible,
+.board-activate-badge:focus-visible,
+.game-die:focus-visible {
+  outline: 2px solid var(--medical-blue);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.35);
+}
+
 .board-hotspot {
   position: absolute;
   pointer-events: auto;

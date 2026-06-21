@@ -24,6 +24,9 @@ import { assetManifest } from '../lib/assetManifest'
 import type { PlayerView } from '../lib/engine/selectors'
 import { Play, Copy } from 'lucide-react'
 import { DIFFICULTY_CONFIG } from '../lib/constants'
+import { PortraitRotatePrompt } from '../components/layout/game/PortraitRotatePrompt'
+import { GameToast } from '../components/ds/GameToast'
+import { ActionPendingIndicator } from '../components/game/ActionPendingIndicator'
 
 export function GamePage() {
   const navigate = useNavigate()
@@ -35,6 +38,7 @@ export function GamePage() {
   const modals = useGameStore((s) => s.modals)
   const snapshot = useGameStore((s) => s.snapshot)
   const localMode = useGameStore((s) => s.localMode)
+  const isActionPending = useGameStore((s) => s.isActionPending)
 
   const controls = useBoardControls()
   const { playerViews } = useGame()
@@ -46,22 +50,28 @@ export function GamePage() {
   const [previewCityId, setPreviewCityId] = useState<number | null>(null)
   const [previewPlayer, setPreviewPlayer] = useState<PlayerView | null>(null)
   const [codeCopied, setCodeCopied] = useState(false)
+  const [startingMission, setStartingMission] = useState(false)
 
   useEffect(() => {
     if (!roomCode) navigate('/play')
   }, [roomCode, navigate])
 
   const handleStart = async () => {
-    if (!roomCode) return
-    if (localMode) {
-      await startGameLocal(roomCode)
-    } else {
-      await startGame(roomCode)
+    if (!roomCode || startingMission) return
+    setStartingMission(true)
+    try {
+      if (localMode) {
+        await startGameLocal(roomCode)
+      } else {
+        await startGame(roomCode)
+      }
+      track('game_started', {
+        difficulty: settings.difficulty,
+        player_count: lobbyPlayers.length,
+      })
+    } finally {
+      setStartingMission(false)
     }
-    track('game_started', {
-      difficulty: settings.difficulty,
-      player_count: lobbyPlayers.length,
-    })
   }
 
   const copyCode = async () => {
@@ -75,7 +85,9 @@ export function GamePage() {
 
   if (status === 'lobby') {
     return (
-      <div className="mission-waiting-room">
+      <>
+        <PortraitRotatePrompt />
+        <div className="mission-waiting-room">
         <div className="mission-waiting-room__panel">
           <p className="mission-waiting-room__eyebrow">Mission Room</p>
           <h1 className="mission-waiting-room__title">Crew Briefing</h1>
@@ -93,6 +105,7 @@ export function GamePage() {
               type="button"
               onClick={copyCode}
               aria-label="Copy room code"
+              aria-live="polite"
               className={`mission-waiting-room__copy${codeCopied ? ' mission-waiting-room__copy--copied' : ''}`}
             >
               <Copy size={16} />
@@ -151,16 +164,25 @@ export function GamePage() {
 
           <section className="mission-waiting-room__actions">
             {isHost ? (
-              <button type="button" className="mission-waiting-room__start" onClick={handleStart}>
+              <button
+                type="button"
+                className="mission-waiting-room__start"
+                onClick={handleStart}
+                disabled={startingMission}
+                aria-busy={startingMission}
+              >
                 <Play size={18} />
-                Start Mission
+                {startingMission ? 'Launching…' : 'Start Mission'}
               </button>
             ) : (
-              <p className="mission-waiting-room__wait">Waiting for host to start mission…</p>
+              <p className="mission-waiting-room__wait" role="status">
+                Waiting for host to start mission…
+              </p>
             )}
           </section>
         </div>
-      </div>
+        </div>
+      </>
     )
   }
 
@@ -169,6 +191,8 @@ export function GamePage() {
 
   return (
     <>
+      <PortraitRotatePrompt />
+      <GameToast />
       <GameShell
         header={
           <MissionHeader
@@ -191,7 +215,7 @@ export function GamePage() {
             <BoardView
               selectedDieIds={controls.selectedDieIds}
               selectedRoom={controls.selectedRoom}
-              controlsFrozen={controls.controlsFrozen}
+              controlsFrozen={controls.controlsFrozen || isActionPending}
               onRoomClick={controls.handleRoomClick}
               onDieSlotClick={controls.handleDieSlotClick}
               onCityClick={setPreviewCityId}
@@ -202,13 +226,15 @@ export function GamePage() {
         }
         status={<MissionStatusPanel />}
         footer={
-          <DiceHandBar
+          <>
+            <ActionPendingIndicator />
+            <DiceHandBar
             selectedDieIds={controls.selectedDieIds}
             roleName={controls.roleName}
             playerName={controls.currentPlayer?.name}
             roleId={controls.currentPlayer?.role}
             playerId={playerId}
-            controlsFrozen={controls.controlsFrozen}
+            controlsFrozen={controls.controlsFrozen || isActionPending}
             canAct={controls.canAct}
             turnStep={controls.turnStep}
             isMyTurn={controls.isMyTurn}
@@ -223,7 +249,8 @@ export function GamePage() {
             onConfirm={controls.confirmPending}
             onCancelConfirm={controls.cancelPending}
             onEngineerFlip={controls.handleEngineerFlip}
-          />
+            />
+          </>
         }
       />
 

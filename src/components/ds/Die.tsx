@@ -34,7 +34,8 @@ export function Die({
       type="button"
       onClick={locked ? undefined : onClick}
       disabled={locked}
-      aria-label={`${FACE_LABELS[face]} die${locked ? ', locked' : ''}`}
+      aria-label={`${FACE_LABELS[face]} die${locked ? ', locked' : ''}${selected ? ', selected' : ''}`}
+      aria-pressed={selected}
       className={[
         'game-die',
         selected ? 'game-die--selected' : '',

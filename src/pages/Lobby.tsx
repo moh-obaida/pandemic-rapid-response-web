@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SiteLayout } from '../components/layout/SiteLayout'
 import { LobbyModal } from '../components/Modals/Lobby'
+import { PortraitRotatePrompt } from '../components/layout/game/PortraitRotatePrompt'
 
 type LobbyMode = 'menu' | 'create' | 'join'
 
@@ -16,6 +17,7 @@ export function LobbyPage() {
 
   return (
     <SiteLayout>
+      <PortraitRotatePrompt />
       <LobbyModal
         initialMode={initialModeFromParams(searchParams)}
         onGameStart={() => navigate('/game')}

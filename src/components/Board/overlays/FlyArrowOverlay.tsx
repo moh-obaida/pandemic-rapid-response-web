@@ -4,6 +4,15 @@ import type { DieFace } from '../../../lib/constants/dice'
 
 const FLIP_FACES: DieFace[] = ['water', 'food', 'power', 'vaccine', 'firstAid']
 
+const FACE_LABELS: Record<DieFace, string> = {
+  plane: 'Plane',
+  water: 'Water',
+  food: 'Food',
+  power: 'Power',
+  vaccine: 'Vaccine',
+  firstAid: 'First Aid',
+}
+
 interface EngineerFlipPickerProps {
   onFlip: (face: DieFace) => void
   disabled?: boolean
@@ -21,6 +30,7 @@ export function EngineerFlipPicker({ onFlip, disabled }: EngineerFlipPickerProps
           type="button"
           className="engineer-flip-picker__btn"
           onClick={() => onFlip(face)}
+          aria-label={`Flip die to ${FACE_LABELS[face]}`}
         >
           <img src={dieImagePath(face)} alt="" width={28} height={28} draggable={false} />
         </button>
@@ -56,7 +66,7 @@ export function FlyArrowOverlay({
           type="button"
           className="board-fly-arrow board-fly-arrow--left"
           style={{ left: `${pos.left - 6}%`, top: `${pos.top}%` }}
-          aria-label="Fly left"
+          aria-label="Fly plane one city left"
           onClick={onFlyLeft}
         >
           ←
@@ -67,7 +77,7 @@ export function FlyArrowOverlay({
           type="button"
           className="board-fly-arrow board-fly-arrow--right"
           style={{ left: `${pos.left + 6}%`, top: `${pos.top}%` }}
-          aria-label="Fly right"
+          aria-label="Fly plane one city right"
           onClick={onFlyRight}
         >
           →

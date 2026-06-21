@@ -11,6 +11,7 @@ interface DieSlotHotspotProps {
   locked?: boolean
   validTarget?: boolean
   dieSelected?: boolean
+  ariaLabel?: string
   onClick?: () => void
 }
 
@@ -22,6 +23,7 @@ export function DieSlotHotspot({
   locked,
   validTarget,
   dieSelected,
+  ariaLabel,
   onClick,
 }: DieSlotHotspotProps) {
   const pos = DIE_SLOT_POSITIONS[roomId]?.[slotIndex]
@@ -41,7 +43,8 @@ export function DieSlotHotspot({
         .filter(Boolean)
         .join(' ')}
       style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
-      aria-label={`${roomId} die slot ${slotIndex + 1}`}
+      aria-label={ariaLabel ?? `${roomId} die slot ${slotIndex + 1}`}
+      aria-pressed={validTarget ? true : undefined}
       data-room-id={roomId}
       data-slot-index={slotIndex}
       onClick={onClick}

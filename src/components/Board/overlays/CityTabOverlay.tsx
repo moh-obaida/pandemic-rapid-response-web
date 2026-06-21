@@ -27,6 +27,10 @@ export function CityTabOverlay({
   const pos = FLIGHTPATH_TAB_POSITIONS[cityId]
   if (!pos) return null
 
+  const deliveryLabel = deliveryReady ? ', delivery ready' : ''
+  const blockerLabel = blockerId ? ', blocked' : ''
+  const cityLabel = `${cityName}${isCurrent ? ', plane here' : ''}${delivered ? ', delivered' : ''}${deliveryLabel}${blockerLabel}`
+
   return (
     <div
       className={[
@@ -55,8 +59,8 @@ export function CityTabOverlay({
         type="button"
         className="board-city-tab__btn"
         onClick={onClick}
-                disabled={!faceUp && !delivered}
-        aria-label={cityName}
+        disabled={!faceUp && !delivered}
+        aria-label={cityLabel}
       >
         <img
           src={cityImagePathById(cityId)}

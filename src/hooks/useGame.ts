@@ -16,6 +16,7 @@ import {
   submitPendingAction,
 } from '../lib/firebase'
 import { track } from '../lib/analytics'
+import { friendlyError } from '../lib/userErrors'
 
 export function useGame() {
   const store = useGameStore()
@@ -38,27 +39,39 @@ export function useGame() {
 
   const dispatchAndSync = useCallback(
     async (action: Parameters<typeof store.dispatch>[0]) => {
-      const { roomCode, localMode, playerId: pid } = useGameStore.getState()
+      const { roomCode, localMode, playerId: pid, setActionPending } = useGameStore.getState()
 
-      if (!localMode && isFirebaseConfigured() && !isHost()) {
-        if (!roomCode || !pid) return null
-        await submitPendingAction(roomCode, pid, action)
-        return null
-      }
-
-      const result = store.dispatch(action)
-      if (result) {
-        await syncAfterDispatch()
-        if (result.result) {
-          track('game_ended', {
-            result: result.result,
-            waste: result.waste,
-            cities_delivered: result.cities.filter((c) => c.status === 'delivered')
-              .length,
-          })
+      setActionPending(true)
+      try {
+        if (!localMode && isFirebaseConfigured() && !isHost()) {
+          if (!roomCode || !pid) return null
+          await submitPendingAction(roomCode, pid, action)
+          return null
         }
+
+        const result = store.dispatch(action)
+        if (result) {
+          await syncAfterDispatch()
+          if (result.result) {
+            track('game_ended', {
+              result: result.result,
+              waste: result.waste,
+              cities_delivered: result.cities.filter((c) => c.status === 'delivered')
+                .length,
+            })
+          }
+        }
+        return result
+      } catch (e) {
+        useGameStore.setState({
+          lastError: friendlyError(
+            e instanceof Error ? e.message : 'Connection failed. Try again.'
+          ),
+        })
+        return null
+      } finally {
+        useGameStore.getState().setActionPending(false)
       }
-      return result
     },
     [store, syncAfterDispatch]
   )

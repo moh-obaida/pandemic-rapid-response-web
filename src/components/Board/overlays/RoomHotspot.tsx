@@ -51,6 +51,7 @@ export function RoomHotspot({
         height: `${spot.height}%`,
       }}
       aria-label={label}
+      aria-pressed={selected ? true : undefined}
       data-room-id={roomId}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}

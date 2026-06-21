@@ -1298,27 +1298,12 @@
   }
 }
 
-/* Portrait — rotate device */
+/* Portrait — React overlay handles rotate prompt; keep shell visible underneath */
 @media (orientation: portrait) and (max-width: 768px) {
   .game-viewport {
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  .game-shell {
-    display: none;
-  }
-
-  .game-viewport::after {
-    content: "Rotate your device for the mission table view";
-    display: block;
-    padding: 2rem;
-    text-align: center;
-    font-family: var(--font-display);
-    font-size: 1.125rem;
-    color: var(--text-dim);
-    max-width: 20rem;
   }
 }
 

@@ -53,7 +53,10 @@ export function DiceHandBar({
   onEngineerFlip,
 }: DiceHandBarProps) {
   const snapshot = useGameStore((s) => s.snapshot)
+  const isActionPending = useGameStore((s) => s.isActionPending)
   const [rolling, setRolling] = useState(false)
+
+  const inputsDisabled = controlsFrozen || isActionPending
 
   const triggerRollAnimation = useCallback(() => {
     setRolling(true)
@@ -101,7 +104,7 @@ export function DiceHandBar({
                   selectedDieIds={selectedDieIds}
                   onDieClick={onDieClick}
                   rolling={rolling}
-                  disabled={controlsFrozen}
+                  disabled={inputsDisabled}
                 />
               ) : isMyTurn && turnStep === 'roll' ? (
                 <span className="dice-dock__hint">Tap Roll Dice</span>
@@ -113,7 +116,7 @@ export function DiceHandBar({
             </div>
 
             {showEngineerFlip && (
-              <EngineerFlipPicker onFlip={onEngineerFlip} disabled={controlsFrozen} />
+              <EngineerFlipPicker onFlip={onEngineerFlip} disabled={inputsDisabled} />
             )}
           </div>
 
@@ -121,7 +124,7 @@ export function DiceHandBar({
             selectedDieIds={selectedDieIds}
             roleId={roleId}
             playerId={playerId}
-            controlsFrozen={controlsFrozen}
+            controlsFrozen={inputsDisabled}
             canAct={canAct}
             turnStep={turnStep}
             isMyTurn={isMyTurn}

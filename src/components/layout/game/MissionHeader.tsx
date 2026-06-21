@@ -120,6 +120,7 @@ export function MissionHeader({
         <span
           className={`mission-bar__conn${localMode ? ' mission-bar__conn--local' : ''}`}
           title={localMode ? 'Local mode' : 'Online'}
+          aria-label={localMode ? 'Local mode — not connected to server' : 'Online — connected to server'}
         >
           {localMode ? <WifiOff size={12} /> : <Wifi size={12} />}
         </span>

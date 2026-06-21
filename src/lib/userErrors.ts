@@ -12,6 +12,8 @@ const FRIENDLY: Record<string, string> = {
   'No rerolls left': 'No rerolls remaining this turn.',
   'Resolve waste roll first': 'Finish the waste roll before continuing.',
   'Roll dice first': 'Roll your dice first.',
+  'Assign full group at once': 'Assign all dice in the group to matching slots at once.',
+  'Connection failed. Try again.': 'Connection failed. Check your network and try again.',
   'Die not available': 'That die is assigned, spent, or locked.',
 }
 

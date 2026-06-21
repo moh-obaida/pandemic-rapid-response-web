@@ -23,6 +23,7 @@ interface GameStore {
   modals: ModalState
   localMode: boolean
   lastError: string | null
+  isActionPending: boolean
 
   setRoom: (code: string, playerId: string) => void
   setPlayerName: (name: string) => void
@@ -43,6 +44,7 @@ interface GameStore {
   setPendingConfirm: (confirm: PendingConfirm | null) => void
   setModal: (key: keyof ModalState, open: boolean) => void
   clearError: () => void
+  setActionPending: (pending: boolean) => void
   reset: () => void
 }
 
@@ -68,6 +70,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   modals: { roomActivation: false, crisis: false, gameEnd: false },
   localMode: false,
   lastError: null,
+  isActionPending: false,
 
   setRoom: (code, playerId) => set({ roomCode: code, playerId }),
   setPlayerName: (name) => set({ playerName: name }),
@@ -148,6 +151,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setPendingConfirm: (confirm) => set({ pendingConfirm: confirm }),
   clearError: () => set({ lastError: null }),
 
+  setActionPending: (pending) => set({ isActionPending: pending }),
+
   setModal: (key, open) =>
     set((s) => ({ modals: { ...s.modals, [key]: open } })),
 
@@ -165,6 +170,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       pendingConfirm: null,
       modals: { roomActivation: false, crisis: false, gameEnd: false },
       lastError: null,
+      isActionPending: false,
     }),
 }))
 
