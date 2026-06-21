@@ -575,8 +575,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  max-height: min(72vh, 580px);
-  overflow: hidden;
+  max-height: min(68vh, 540px);
+  padding: 0.5rem;
+  overflow: visible;
 }
 
 /* --- Mission table frame (embeds board PNG into cockpit) --- */
@@ -708,12 +709,17 @@
 /* --- Hero / compact board preview --- */
 .mission-preview {
   position: relative;
-  width: min(100%, 300px);
+  width: min(100%, 340px);
   margin: 0 auto;
 }
 
 .mission-preview--hero .mission-table {
   transform: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 48px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(56, 189, 248, 0.16),
+    0 24px 64px rgba(0, 0, 0, 0.55);
 }
 
 .mission-preview__board-wrap {
@@ -1050,7 +1056,7 @@
 
 .role-deck__stage {
   position: relative;
-  height: min(22rem, 52vw);
+  height: min(24rem, 56vw);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1085,9 +1091,10 @@
 
 .role-deck__img {
   display: block;
-  width: min(11rem, 38vw);
+  width: min(13rem, 42vw);
   height: auto;
   border-radius: var(--radius-md);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
 
 .role-deck__info {

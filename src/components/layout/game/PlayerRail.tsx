@@ -14,7 +14,7 @@ export function PlayerRail({ players, playerId, onRoleClick }: PlayerRailProps) 
   const activeIndex = players.findIndex((p) => p.isActive)
 
   return (
-    <div className="player-rail">
+    <div className="player-rail player-rail--crew-deck">
       <h2 className="panel-heading">Crew</h2>
       <ol className="player-rail__order" start={1}>
         {players.map((player, i) => {

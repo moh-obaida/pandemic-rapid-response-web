@@ -82,7 +82,7 @@ export function DiceHandBar({
     )
 
   return (
-    <div className="dice-dock" aria-label="Active player dock" data-testid="dice-dock">
+    <div className="dice-dock dice-dock--console" aria-label="Active player dock" data-testid="dice-dock">
       {pendingConfirm ? (
         <ConfirmBar pending={pendingConfirm} onConfirm={onConfirm} onCancel={onCancelConfirm} />
       ) : (

@@ -28,7 +28,7 @@ export function MissionStatusPanel() {
   const crisisEnabled = useGameStore((s) => s.settings.crisisEnabled)
 
   return (
-    <div className="mission-status-panel">
+    <div className="mission-status-panel mission-status-panel--instruments">
       <h2 className="panel-heading">Mission Status</h2>
       {crisisEnabled && (
         <p className="mission-status-panel__crisis-on">Crisis mode active</p>
