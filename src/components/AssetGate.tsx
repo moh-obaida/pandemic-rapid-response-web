@@ -42,7 +42,7 @@ function AssetGateValidated({ children }: { children: React.ReactNode }) {
 
   if (state !== 'ok') {
     return (
-      <div className="asset-gate asset-gate--error">
+      <div className="asset-gate asset-gate--error" data-testid="asset-gate-error">
         <h1 className="asset-gate__title">Missing required PRR assets</h1>
         <p className="asset-gate__lede">
           Gameplay requires all board, card, dice, crate, and token images under{' '}

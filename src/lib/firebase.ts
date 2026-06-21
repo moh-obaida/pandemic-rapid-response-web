@@ -346,3 +346,9 @@ export async function syncSnapshotLocal(
 ): Promise<void> {
   await syncFullRoomLocal(code, { snapshot })
 }
+
+/** DEV-only: keep local multiplayer subscription aligned with qaBridge seeds. */
+export function syncLocalRoomForQa(room: FirebaseRoom): void {
+  localRooms.set(room.code, room)
+  notifyLocal(room.code)
+}

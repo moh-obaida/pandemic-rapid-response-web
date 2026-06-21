@@ -56,6 +56,20 @@ export function GamePage() {
     if (!roomCode) navigate('/play')
   }, [roomCode, navigate])
 
+  const qaDevPreview = useGameStore((s) => s.qaDevPreview)
+  useEffect(() => {
+    if (!import.meta.env.DEV || !qaDevPreview) return
+    if (qaDevPreview.cityId != null) {
+      setPreviewCityId((prev) => (prev === qaDevPreview.cityId ? prev : qaDevPreview.cityId!))
+    }
+    if (qaDevPreview.rolePlayerId) {
+      const p = playerViews.find((v) => v.id === qaDevPreview.rolePlayerId)
+      if (p) {
+        setPreviewPlayer((prev) => (prev?.id === p.id ? prev : p))
+      }
+    }
+  }, [qaDevPreview, playerViews])
+
   const handleStart = async () => {
     if (!roomCode || startingMission) return
     setStartingMission(true)

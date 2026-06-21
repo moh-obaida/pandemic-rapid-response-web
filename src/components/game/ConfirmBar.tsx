@@ -31,10 +31,10 @@ export function ConfirmBar({ pending, onConfirm, onCancel }: ConfirmBarProps) {
     <div className="confirm-bar" role="dialog" aria-label="Confirm action">
       <p className="confirm-bar__label">{pending.label}</p>
       <div className="confirm-bar__actions">
-        <Button size="sm" onClick={onConfirm}>
+        <Button size="sm" onClick={onConfirm} data-testid="confirm-action">
           {confirmButtonLabel(pending)}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onCancel}>
+        <Button size="sm" variant="ghost" onClick={onCancel} data-testid="confirm-cancel">
           Cancel
         </Button>
       </div>

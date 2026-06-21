@@ -24,6 +24,8 @@ interface GameStore {
   localMode: boolean
   lastError: string | null
   isActionPending: boolean
+  /** DEV-only preview hints set by qaBridge for screenshot QA. */
+  qaDevPreview: { cityId?: number; rolePlayerId?: string } | null
 
   setRoom: (code: string, playerId: string) => void
   setPlayerName: (name: string) => void
@@ -71,6 +73,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   localMode: false,
   lastError: null,
   isActionPending: false,
+  qaDevPreview: null,
 
   setRoom: (code, playerId) => set({ roomCode: code, playerId }),
   setPlayerName: (name) => set({ playerName: name }),
@@ -171,6 +174,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       modals: { roomActivation: false, crisis: false, gameEnd: false },
       lastError: null,
       isActionPending: false,
+      qaDevPreview: null,
     }),
 }))
 
