@@ -1,6 +1,11 @@
-/* Plane board — contained aspect ratio, no clipping */
+/* =================================================================
+   Board View — vertical PRR board, large and dominant
+   Board is the hero. Everything else frames it.
+   ================================================================= */
+
+/* --- Default board sizing (standalone / landing page context) --- */
 .board-view {
-  --board-max-h: min(72vh, 640px);
+  --board-max-h: min(85vh, 800px);
   position: relative;
   width: min(100%, calc(var(--board-max-h) * 585 / 1024));
   max-width: 100%;
@@ -32,9 +37,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .board-view__loader {
-    animation: none;
-  }
+  .board-view__loader { animation: none; }
 }
 
 .board-view__loading-label {
@@ -49,18 +52,20 @@
   to { transform: rotate(360deg); }
 }
 
+/* --- Board art image --- */
 .board-view__art {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   object-position: center;
-  border-radius: 0.75rem;
-  filter: drop-shadow(0 16px 48px rgba(0, 0, 0, 0.55));
+  border-radius: 0.5rem;
+  filter: drop-shadow(0 12px 40px rgba(0, 0, 0, 0.55));
   user-select: none;
   pointer-events: none;
 }
 
+/* --- Overlay layers (hotspots, pawns, crates) --- */
 .board-view__layer {
   position: absolute;
   inset: 0;
@@ -73,6 +78,7 @@
   pointer-events: none;
 }
 
+/* --- Focus styles --- */
 .board-hotspot:focus-visible,
 .board-die-slot:focus-visible,
 .board-fly-arrow:focus-visible,
@@ -84,6 +90,7 @@
   box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.35);
 }
 
+/* --- Room hotspots on board --- */
 .board-hotspot {
   position: absolute;
   pointer-events: auto;
@@ -199,6 +206,7 @@
   pointer-events: auto;
 }
 
+/* --- Engineer flip picker --- */
 .engineer-flip-picker {
   display: flex;
   align-items: center;
@@ -225,6 +233,7 @@
   border-color: var(--active);
 }
 
+/* --- Dice dock hints --- */
 .dice-dock__hint-list {
   margin: 0;
   padding-left: 1rem;
@@ -252,16 +261,13 @@
   gap: 0.375rem;
 }
 
+/* --- Keyframes --- */
 @keyframes board-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 16px 4px rgba(250, 204, 21, 0.25);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.35); }
+  50% { box-shadow: 0 0 16px 4px rgba(250, 204, 21, 0.25); }
 }
 
+/* --- Pawn overlays --- */
 .board-overlay__pawn {
   position: absolute;
   width: 1.35rem;
@@ -305,7 +311,7 @@
   pointer-events: none;
 }
 
-/* City tabs on board perimeter */
+/* --- City tabs on board perimeter --- */
 .board-city-tab {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -317,9 +323,7 @@
   transition: transform var(--dur-fast), filter var(--dur-fast);
 }
 
-.board-city-tab--face-up {
-  cursor: pointer;
-}
+.board-city-tab--face-up { cursor: pointer; }
 
 .board-city-tab--face-up:hover {
   transform: translate(-50%, -50%) scale(1.08);
@@ -366,9 +370,7 @@
   pointer-events: none;
 }
 
-.board-city-tab__blocker {
-  display: none;
-}
+.board-city-tab__blocker { display: none; }
 
 .board-overlay__waste {
   position: absolute;
@@ -404,9 +406,8 @@
   pointer-events: none;
 }
 
-.flightpath-strip__card-wrap {
-  position: relative;
-}
+/* --- Flightpath strip (city cards in route) --- */
+.flightpath-strip__card-wrap { position: relative; }
 
 .flightpath-strip__blocker {
   position: absolute;
@@ -431,232 +432,21 @@
   padding: 0.5rem;
 }
 
-.flightpath-strip--empty {
-  justify-content: center;
-}
+.flightpath-strip--empty { justify-content: center; }
 
-/* Die & crate game pieces */
-.game-die {
-  display: inline-flex;
-  border: none;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-  transition: transform var(--dur-fast), filter var(--dur-fast);
-  line-height: 0;
-}
+/* =================================================================
+   BOARD STAGE — The core game center layout
+   Simple flex column: board frame fills height, route strip below.
+   ================================================================= */
 
-.game-die:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-
-.game-die:hover:not(:disabled) {
-  transform: translateY(-2px) rotate(-4deg);
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.45));
-}
-
-.game-die--selected {
-  transform: translateY(-3px) scale(1.06) rotate(-2deg);
-  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.75));
-}
-
-.game-die--rolling {
-  animation: diceRoll 750ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
-  z-index: 2;
-}
-
-.game-die--settled {
-  animation: diceSettle 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-@keyframes diceRoll {
-  0% {
-    transform: translateY(0) rotate(0deg) scale(1);
-  }
-  20% {
-    transform: translateY(-18px) rotate(80deg) scale(1.08);
-  }
-  45% {
-    transform: translateY(4px) rotate(180deg) scale(0.96);
-  }
-  70% {
-    transform: translateY(-8px) rotate(280deg) scale(1.04);
-  }
-  100% {
-    transform: translateY(0) rotate(360deg) scale(1);
-  }
-}
-
-@keyframes diceSettle {
-  0% {
-    transform: translateY(0) scale(1.1);
-    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.55));
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    filter: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .game-die--rolling,
-  .game-die--settled {
-    animation: none;
-  }
-}
-
-.game-die--locked {
-  opacity: 0.55;
-  filter: grayscale(0.4) drop-shadow(0 0 6px rgba(234, 179, 8, 0.5));
-}
-
-.game-die__img {
-  display: block;
-  border-radius: 0.35rem;
-  object-fit: contain;
-}
-
-.game-crate {
-  display: inline-block;
-  background-image: url('/assets/prr/board/crates-sprite.png');
-  background-repeat: no-repeat;
-  background-size: 300% 200%;
-  border-radius: 0.2rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-}
-
-.game-crate--firstAid { background-position: 100% 100%; }
-.game-crate--power { background-position: 50% 0%; }
-.game-crate--food { background-position: 100% 0%; }
-.game-crate--vaccine { background-position: 0% 100%; }
-.game-crate--water { background-position: 50% 100%; }
-
-/* Role card thumbnail */
-.role-card-art {
-  border: none;
-  padding: 0;
-  background: transparent;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-}
-
-.role-card-art__img {
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  object-position: top center;
-}
-
-/* City card art */
-.city-card-art {
-  border: none;
-  padding: 0;
-  background: transparent;
-  line-height: 0;
-}
-
-.city-card-art__img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 0.375rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  transition: transform var(--dur-fast), box-shadow var(--dur-fast);
-}
-
-.city-card-art--interactive:hover .city-card-art__img {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
-
-.city-card-art--compact .city-card-art__img {
-  border-radius: 0.25rem;
-}
-
-.city-card-art--delivered .city-card-art__img {
-  opacity: 0.4;
-  filter: grayscale(0.5);
-}
-
-.city-card-art--current .city-card-art__img {
-  outline: 2px solid var(--active);
-  outline-offset: 2px;
-}
-
-/* Crisis card art */
-.crisis-card-art__img {
-  width: 100%;
-  max-width: 12rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-/* Mission instrument chrome */
-.instrument-panel {
-  position: relative;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  min-height: 5rem;
-}
-
-.instrument-panel__bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.instrument-panel__content {
-  position: relative;
-  z-index: 1;
-  padding: 0.5rem;
-}
-
-/* Flightpath dock — horizontal city strip */
-.flightpath-strip {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding: 0.5rem 0.25rem;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-.flightpath-strip__item {
-  flex: 0 0 auto;
-  width: 4.5rem;
-  scroll-snap-align: start;
-  position: relative;
-}
-
-.flightpath-strip__label {
-  font-family: var(--font-mono);
-  font-size: 0.5rem;
-  text-align: center;
-  color: var(--text-faint);
-  margin-top: 0.125rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Board stage — vertical board dominates center */
 .board-stage-inner--table {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding: 0.1rem 0.2rem 0.2rem;
-  gap: 0.15rem;
+  padding: 0.25rem;
+  gap: 0.25rem;
   position: relative;
   z-index: 1;
 }
@@ -665,31 +455,31 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
   width: 100%;
 }
 
-/* Thin cockpit bezel — board asset is the hero */
+/* --- Mission table frame (cockpit bezel around board) --- */
 .mission-table--game {
-  width: 100%;
   height: 100%;
-  max-height: 100%;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 585 / 1024;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 0.15rem;
+  padding: 0.2rem;
   border-radius: var(--radius-md);
   background: linear-gradient(180deg, rgba(14, 22, 34, 0.95) 0%, rgba(6, 10, 16, 0.98) 100%);
   border: 1px solid rgba(100, 130, 160, 0.32);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    inset 0 0 24px rgba(0, 0, 0, 0.35);
+    inset 0 0 24px rgba(0, 0, 0, 0.35),
+    0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-.mission-table--game .mission-table__bezel {
-  display: none;
-}
+.mission-table--game .mission-table__bezel { display: none; }
 
 .mission-table--game .mission-table__surface {
   flex: 1;
@@ -706,11 +496,9 @@
   overflow: hidden;
 }
 
-.mission-table--game .mission-table__scanline {
-  display: none;
-}
+.mission-table--game .mission-table__scanline { display: none; }
 
-.board-stage-inner--table .board-view,
+/* Board inside mission-table uses container queries */
 .mission-table--game .board-view {
   --board-max-h: 100%;
   width: min(100cqw, calc(100cqh * 585 / 1024));
@@ -732,6 +520,7 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
 }
 
+/* --- Route monitor (city strip below board) --- */
 .route-monitor {
   flex: 0 0 auto;
   display: flex;
@@ -761,6 +550,34 @@
   padding: 0;
 }
 
+.flightpath-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.flightpath-strip__item {
+  flex: 0 0 auto;
+  width: 4.5rem;
+  scroll-snap-align: start;
+  position: relative;
+}
+
+.flightpath-strip__label {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  text-align: center;
+  color: var(--text-faint);
+  margin-top: 0.125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Active player seat highlight --- */
 .player-seat--active {
   border-color: rgba(250, 204, 21, 0.5);
   box-shadow: 0 0 20px rgba(250, 204, 21, 0.15);
@@ -771,6 +588,7 @@
   background: var(--room-food);
 }
 
+/* --- Die slots on board --- */
 .board-die-slot {
   position: absolute;
   width: 1.25rem;
@@ -783,9 +601,7 @@
   pointer-events: auto;
 }
 
-.board-die-slot--interactive {
-  cursor: pointer;
-}
+.board-die-slot--interactive { cursor: pointer; }
 
 .board-die-slot--interactive:hover {
   border-color: var(--active);
@@ -799,13 +615,8 @@
   animation: slot-glow 1.4s ease-in-out infinite;
 }
 
-.board-die-slot--dim {
-  opacity: 0.35;
-}
-
-.board-die-slot--locked {
-  position: relative;
-}
+.board-die-slot--dim { opacity: 0.35; }
+.board-die-slot--locked { position: relative; }
 
 .board-die-slot__lock {
   position: absolute;
@@ -848,6 +659,171 @@
   width: 100%;
 }
 
+/* --- Die & crate game pieces --- */
+.game-die {
+  display: inline-flex;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform var(--dur-fast), filter var(--dur-fast);
+  line-height: 0;
+}
+
+.game-die:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.game-die:hover:not(:disabled) {
+  transform: translateY(-2px) rotate(-4deg);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.45));
+}
+
+.game-die--selected {
+  transform: translateY(-3px) scale(1.06) rotate(-2deg);
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.75));
+}
+
+.game-die--rolling {
+  animation: diceRoll 750ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+}
+
+.game-die--settled {
+  animation: diceSettle 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes diceRoll {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  20% { transform: translateY(-18px) rotate(80deg) scale(1.08); }
+  45% { transform: translateY(4px) rotate(180deg) scale(0.96); }
+  70% { transform: translateY(-8px) rotate(280deg) scale(1.04); }
+  100% { transform: translateY(0) rotate(360deg) scale(1); }
+}
+
+@keyframes diceSettle {
+  0% { transform: translateY(0) scale(1.1); filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.55)); }
+  100% { transform: translateY(0) scale(1); filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-die--rolling, .game-die--settled { animation: none; }
+}
+
+.game-die--locked {
+  opacity: 0.55;
+  filter: grayscale(0.4) drop-shadow(0 0 6px rgba(234, 179, 8, 0.5));
+}
+
+.game-die__img {
+  display: block;
+  border-radius: 0.35rem;
+  object-fit: contain;
+}
+
+.game-crate {
+  display: inline-block;
+  background-image: url('/assets/prr/board/crates-sprite.png');
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  border-radius: 0.2rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.game-crate--firstAid { background-position: 100% 100%; }
+.game-crate--power { background-position: 50% 0%; }
+.game-crate--food { background-position: 100% 0%; }
+.game-crate--vaccine { background-position: 0% 100%; }
+.game-crate--water { background-position: 50% 100%; }
+
+/* --- Role card thumbnail --- */
+.role-card-art {
+  border: none;
+  padding: 0;
+  background: transparent;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.role-card-art__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  object-position: top center;
+}
+
+/* --- City card art --- */
+.city-card-art {
+  border: none;
+  padding: 0;
+  background: transparent;
+  line-height: 0;
+}
+
+.city-card-art__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: transform var(--dur-fast), box-shadow var(--dur-fast);
+}
+
+.city-card-art--interactive:hover .city-card-art__img {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.city-card-art--compact .city-card-art__img { border-radius: 0.25rem; }
+
+.city-card-art--delivered .city-card-art__img {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+.city-card-art--current .city-card-art__img {
+  outline: 2px solid var(--active);
+  outline-offset: 2px;
+}
+
+/* --- Crisis card art --- */
+.crisis-card-art__img {
+  width: 100%;
+  max-width: 12rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Instrument panel chrome --- */
+.instrument-panel {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-height: 5rem;
+}
+
+.instrument-panel__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.instrument-panel__content {
+  position: relative;
+  z-index: 1;
+  padding: 0.5rem;
+}
+
+/* --- Crate images --- */
 .game-crate-img__art {
   display: block;
   width: 100%;
@@ -876,6 +852,7 @@
   border: 1.5px solid var(--bg-app);
 }
 
+/* --- Asset gate --- */
 .asset-gate {
   min-height: 100vh;
   display: flex;
@@ -887,9 +864,7 @@
   background: var(--bg-app);
 }
 
-.asset-gate--error {
-  max-width: 36rem;
-}
+.asset-gate--error { max-width: 36rem; }
 
 .asset-gate__title {
   font-family: var(--font-display);

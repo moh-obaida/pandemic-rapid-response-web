@@ -7,7 +7,7 @@ interface BoardStageProps {
   onCityClick?: (cityId: number) => void
 }
 
-/** Center table: board embedded in aircraft command-table frame + route strip. */
+/** Center stage: vertical PRR board fills available height, route strip below. */
 export function BoardStage({ children, onCityClick }: BoardStageProps) {
   return (
     <div className="board-stage-inner board-stage-inner--table">
