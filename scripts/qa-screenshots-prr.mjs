@@ -114,7 +114,7 @@ class WorkerGroup {
     /** @type {string[]} */
     this.skippedScroll = []
     /** @type {string[]} */
-    this.flaky = []
+    this.flakyList = []
     /** @type {string[]} */
     this.assumptions = []
   }
@@ -145,8 +145,8 @@ class WorkerGroup {
    * @param {string} relPath
    * @param {string} note
    */
-  flaky(relPath, note) {
-    this.flaky.push(`- \`${relPath}\` — ${note}`)
+  markFlaky(relPath, note) {
+    this.flakyList.push(`- \`${relPath}\` — ${note}`)
   }
 }
 
@@ -185,14 +185,38 @@ async function waitForQaBridge(page) {
 }
 
 /**
+ * @param {import('playwright').BrowserContext} context
  * @param {import('playwright').Page} page
+ * @param {string} baseUrl
  */
-async function clearBrowserStorage(page) {
-  await page.context().clearCookies()
-  await page.evaluate(() => {
-    localStorage.clear()
-    sessionStorage.clear()
-  })
+async function clearBrowserStorage(context, page, baseUrl) {
+  try {
+    await context.clearCookies()
+  } catch {
+    // Cookie cleanup is best-effort.
+  }
+
+  try {
+    const currentUrl = page.url()
+    if (!currentUrl || currentUrl === 'about:blank' || !currentUrl.startsWith(baseUrl)) {
+      await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+    }
+
+    await page.evaluate(() => {
+      try {
+        window.localStorage.clear()
+      } catch {
+        // Blocked on about:blank, error documents, etc.
+      }
+      try {
+        window.sessionStorage.clear()
+      } catch {
+        // Blocked on about:blank, error documents, etc.
+      }
+    })
+  } catch {
+    // Storage cleanup must never fail the screenshot run.
+  }
 }
 
 /**
@@ -438,13 +462,13 @@ async function runPublicLobbyWorker(browser, outDir) {
         await page.waitForTimeout(40)
       }
       if (!caughtConnecting) {
-        group.flaky(
+        group.markFlaky(
           relShot(group.folder, 'lobby-create-connecting', viewportKey, 'viewport'),
           'Local room creation too fast to capture Connecting… label',
         )
       }
 
-      await clearBrowserStorage(page)
+      await clearBrowserStorage(context, page, BASE_URL)
       await createLocalRoom(page, `QA ${viewportKey.slice(0, 6)}`)
       await capturePageSet(page, group, outDir, 'crew-briefing-host', viewportKey, {
         includeFull: false,
@@ -480,7 +504,7 @@ async function runPublicLobbyWorker(browser, outDir) {
       }
 
       let caughtLaunching = false
-      await clearBrowserStorage(page)
+      await clearBrowserStorage(context, page, BASE_URL)
       await createLocalRoom(page, 'QA Launch')
       const startBtn = page.getByTestId('waiting-room-start')
       await startBtn.click()
@@ -494,7 +518,7 @@ async function runPublicLobbyWorker(browser, outDir) {
         await page.waitForTimeout(30)
       }
       if (!caughtLaunching) {
-        group.flaky(
+        group.markFlaky(
           relShot(group.folder, 'start-mission-launching', viewportKey, 'viewport'),
           'Local startGameLocal completes before Launching… is visible',
         )
@@ -526,7 +550,7 @@ async function runGameStatesWorker(browser, outDir) {
     const { context, page } = await newPreparedPage(browser, viewport)
 
     try {
-      await clearBrowserStorage(page)
+      await clearBrowserStorage(context, page, BASE_URL)
       await createLocalRoom(page, `QA Game ${viewportKey.slice(-4)}`)
       await startMission(page)
 
@@ -552,12 +576,27 @@ async function runGameStatesWorker(browser, outDir) {
 
       const hotspot = page.getByTestId('board-hotspot-food')
       if (await hotspot.isVisible().catch(() => false)) {
-        await hotspot.hover()
-        await page.waitForTimeout(150)
-        await captureGameViewport(page, group, outDir, 'hotspot-hover-food', viewportKey)
-        await hotspot.focus()
-        await page.waitForTimeout(150)
-        await captureGameViewport(page, group, outDir, 'hotspot-focus-food', viewportKey)
+        try {
+          await hotspot.hover({ timeout: 5_000, force: true })
+          await page.waitForTimeout(150)
+          await captureGameViewport(page, group, outDir, 'hotspot-hover-food', viewportKey)
+        } catch {
+          group.markFlaky(
+            relShot(group.folder, 'hotspot-hover-food', viewportKey, 'viewport'),
+            'Hover blocked by overlapping board layers — skipped',
+          )
+        }
+
+        try {
+          await hotspot.focus({ timeout: 5_000 })
+          await page.waitForTimeout(150)
+          await captureGameViewport(page, group, outDir, 'hotspot-focus-food', viewportKey)
+        } catch {
+          group.markFlaky(
+            relShot(group.folder, 'hotspot-focus-food', viewportKey, 'viewport'),
+            'Focus on food hotspot failed — skipped',
+          )
+        }
       } else {
         group.skip(
           relShot(group.folder, 'hotspot-hover-food', viewportKey, 'viewport'),
@@ -676,7 +715,7 @@ async function runResponsiveA11yWorker(browser, outDir) {
         viewportKey === 'iphone-12-landscape-844x390' ||
         viewportKey === 'ipad-landscape-1366x1024'
       ) {
-        await clearBrowserStorage(page)
+        await clearBrowserStorage(context, page, BASE_URL)
         await createLocalRoom(page, 'QA Landscape')
         await captureGameViewport(page, group, outDir, 'lobby-landscape-crew-briefing', viewportKey)
         await startMission(page)
@@ -691,7 +730,7 @@ async function runResponsiveA11yWorker(browser, outDir) {
         await page.waitForTimeout(150)
         await captureGameViewport(page, group, outDir, 'focus-landing-cta', viewportKey)
 
-        await clearBrowserStorage(page)
+        await clearBrowserStorage(context, page, BASE_URL)
         await createLocalRoom(page, 'QA A11y')
         await startMission(page)
         await rollDiceIfNeeded(page)
@@ -716,13 +755,13 @@ async function runResponsiveA11yWorker(browser, outDir) {
         if (await submit.isDisabled().catch(() => false)) {
           await captureGameViewport(page, group, outDir, 'disabled-create-submit', viewportKey)
         } else {
-          group.flaky(
+          group.markFlaky(
             relShot(group.folder, 'disabled-create-submit', viewportKey, 'viewport'),
             'Submit button not disabled long enough during connect',
           )
         }
 
-        await clearBrowserStorage(page)
+        await clearBrowserStorage(context, page, BASE_URL)
         await createLocalRoom(page, 'QA Toast')
         await startMission(page)
         await waitForQaBridge(page)
@@ -778,7 +817,7 @@ async function writeReports(workers, git, outDir) {
 
 - **Captured:** ${w.captured.length}
 - **Skipped:** ${w.skipped.length}
-- **Flaky:** ${w.flaky.length}
+- **Flaky:** ${w.flakyList.length}
 - **Skipped scroll positions:** ${w.skippedScroll.length}
 
 #### Captured files
@@ -791,7 +830,7 @@ ${w.skipped.join('\n') || '_None_'}
 
 #### Flaky / timing-dependent
 
-${w.flaky.join('\n') || '_None_'}
+${w.flakyList.join('\n') || '_None_'}
 
 #### Skipped middle/bottom scroll
 
@@ -890,7 +929,7 @@ ${Object.values(workers)
 ## Flaky / timing-dependent states
 
 ${Object.values(workers)
-  .flatMap((w) => w.flaky)
+  .flatMap((w) => w.flakyList)
   .join('\n') || '_None_'}
 
 ## Skipped scroll positions (middle/bottom)
