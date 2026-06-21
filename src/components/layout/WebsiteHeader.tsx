@@ -26,6 +26,7 @@ export function WebsiteHeader() {
           <Link
             key={item.to}
             to={item.to}
+            data-testid={`nav-${item.to.slice(1).replace(/\//g, '-')}`}
             className={[
               'site-header__link',
               pathname === item.to ? 'site-header__link--active' : '',

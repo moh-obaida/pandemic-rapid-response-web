@@ -1084,7 +1084,8 @@ async function runResponsiveA11yWorker(browser, outDir) {
       if (viewportKey === 'desktop-1920x1080') {
         await runScenario(group, `${viewportKey}/focus-header-nav`, async () => {
           await goto(page, '/')
-          const navLink = page.getByRole('link', { name: 'How to Play' }).first()
+          const navLink = page.getByTestId('nav-how-to-play')
+          await navLink.waitFor({ state: 'visible', timeout: NAV_TIMEOUT_MS }).catch(() => {})
           if (await navLink.isVisible().catch(() => false)) {
             await navLink.focus()
             await sleep(120)

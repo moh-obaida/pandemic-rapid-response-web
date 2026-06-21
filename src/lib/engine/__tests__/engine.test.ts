@@ -474,7 +474,7 @@ describe('group assignment', () => {
     expect(state.roomSlots.water?.[1]).toBe(waterDice[1].id)
   })
 
-  it('rejects partial group assignment via ASSIGN_DIE', () => {
+  it('rejects partial group assignment via ASSIGN_DIE for normal players', () => {
     let state = setupGame({
       difficulty: 'normal',
       maxPlayers: 1,
@@ -482,6 +482,7 @@ describe('group assignment', () => {
       players: [{ id: 'p1', name: 'A', isHost: true }],
     })
     state.players[0].position = 'water'
+    state.players[0].role = 'technician'
     state = applyAction(state, { type: 'ROLL_DICE', playerId: 'p1' }) as typeof state
     const die = state.dice.find((d) => d.ownerId === 'p1' && d.location === 'hand')!
     die.face = 'water'
@@ -493,6 +494,59 @@ describe('group assignment', () => {
       slotIndex: 0,
     })
     expect(isRuleError(result)).toBe(true)
+    if (isRuleError(result)) {
+      expect(result.error).toBe('Assign full group at once')
+    }
+  })
+
+  it('allows normal players to assign a single die to a size-1 group slot', () => {
+    let state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 1,
+      crisisEnabled: false,
+      players: [{ id: 'p1', name: 'A', isHost: true }],
+    })
+    state.players[0].position = 'water'
+    state.players[0].role = 'technician'
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: 'p1' }) as typeof state
+    const die = state.dice.find((d) => d.ownerId === 'p1' && d.location === 'hand')!
+    die.face = 'water'
+    const result = applyAction(state, {
+      type: 'ASSIGN_DIE',
+      playerId: 'p1',
+      dieId: die.id,
+      roomId: 'water',
+      slotIndex: 2,
+    })
+    expect(isRuleError(result)).toBe(false)
+    if (!isRuleError(result)) {
+      expect(result.roomSlots.water?.[2]).toBe(die.id)
+    }
+  })
+
+  it('allows supply specialist to assign one die into a multi-slot group', () => {
+    let state = setupGame({
+      difficulty: 'normal',
+      maxPlayers: 1,
+      crisisEnabled: false,
+      players: [{ id: 'p1', name: 'A', isHost: true }],
+    })
+    state.players[0].position = 'water'
+    state.players[0].role = 'supplySpecialist'
+    state = applyAction(state, { type: 'ROLL_DICE', playerId: 'p1' }) as typeof state
+    const die = state.dice.find((d) => d.ownerId === 'p1' && d.location === 'hand')!
+    die.face = 'water'
+    const result = applyAction(state, {
+      type: 'ASSIGN_DIE',
+      playerId: 'p1',
+      dieId: die.id,
+      roomId: 'water',
+      slotIndex: 0,
+    })
+    expect(isRuleError(result)).toBe(false)
+    if (!isRuleError(result)) {
+      expect(result.roomSlots.water?.[0]).toBe(die.id)
+    }
   })
 })
 
